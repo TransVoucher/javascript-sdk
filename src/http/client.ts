@@ -29,7 +29,7 @@ export class HttpClient {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Authorization': `Bearer ${this.config.apiKey}`,
-        'User-Agent': 'TransVoucher-TypeScript-SDK/1.0.0'
+        'User-Agent': 'TransVoucher-JavaScript-SDK/1.0.0'
       }
     });
 
