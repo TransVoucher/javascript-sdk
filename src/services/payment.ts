@@ -31,10 +31,10 @@ export class PaymentService {
   /**
    * Get payment status by ID
    */
-  async getStatus(paymentId: string, options?: RequestOptions): Promise<Payment> {
-    if (!paymentId || typeof paymentId !== 'string') {
-      throw new ValidationError('Payment ID is required and must be a string', {
-        paymentId: ['Payment ID is required and must be a string']
+  async getStatus(paymentId: number, options?: RequestOptions): Promise<Payment> {
+    if (!paymentId || typeof paymentId !== 'number') {
+      throw new ValidationError('Payment ID is required and must be a number', {
+        paymentId: ['Payment ID is required and must be a number']
       });
     }
 
@@ -45,6 +45,34 @@ export class PaymentService {
     }
 
     return response.data;
+  }
+
+  /**
+   * Check if the payment is completed
+   */
+  isCompleted(payment: Payment): boolean {
+    return payment.status === 'completed';
+  }
+
+  /**
+   * Check if the payment is pending
+   */
+  isPending(payment: Payment): boolean {
+    return payment.status === 'pending';
+  }
+
+  /**
+   * Check if the payment has failed
+   */
+  isFailed(payment: Payment): boolean {
+    return payment.status === 'failed';
+  }
+
+  /**
+   * Check if the payment has expired
+   */
+  isExpired(payment: Payment): boolean {
+    return payment.status === 'expired';
   }
 
   /**
@@ -105,28 +133,32 @@ export class PaymentService {
     }
 
     // Optional field validations
-    if (data.customer_email && !this.isValidEmail(data.customer_email)) {
-      errors.customer_email = ['Customer email must be a valid email address'];
-    }
-
-    if (data.webhook_url && !this.isValidUrl(data.webhook_url)) {
-      errors.webhook_url = ['Webhook URL must be a valid URL'];
-    }
-
-    if (data.redirect_url && !this.isValidUrl(data.redirect_url)) {
-      errors.redirect_url = ['Redirect URL must be a valid URL'];
-    }
-
-    if (data.reference && (typeof data.reference !== 'string' || data.reference.length > 255)) {
-      errors.reference = ['Reference must be a string with maximum 255 characters'];
+    if (data.title && (typeof data.title !== 'string' || data.title.length > 255)) {
+      errors.title = ['Title must be a string with maximum 255 characters'];
     }
 
     if (data.description && (typeof data.description !== 'string' || data.description.length > 1000)) {
       errors.description = ['Description must be a string with maximum 1000 characters'];
     }
 
-    if (data.customer_name && (typeof data.customer_name !== 'string' || data.customer_name.length > 255)) {
-      errors.customer_name = ['Customer name must be a string with maximum 255 characters'];
+    if (data.reference_id && (typeof data.reference_id !== 'string' || data.reference_id.length > 255)) {
+      errors.reference_id = ['Reference ID must be a string with maximum 255 characters'];
+    }
+
+    if (data.customer_commission_percentage !== undefined) {
+      if (typeof data.customer_commission_percentage !== 'number' || 
+          data.customer_commission_percentage < 0 || 
+          data.customer_commission_percentage > 100) {
+        errors.customer_commission_percentage = ['Customer commission percentage must be a number between 0 and 100'];
+      }
+    }
+
+    if (data.multiple_use !== undefined && typeof data.multiple_use !== 'boolean') {
+      errors.multiple_use = ['Multiple use must be a boolean'];
+    }
+
+    if (data.expires_at && !this.isValidDate(data.expires_at)) {
+      errors.expires_at = ['Expires at must be a valid date'];
     }
 
     if (Object.keys(errors).length > 0) {

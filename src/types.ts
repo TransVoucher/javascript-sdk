@@ -32,32 +32,37 @@ export interface PaginatedResponse<T> extends ApiResponse<T> {
 export interface CreatePaymentRequest {
   amount: number;
   currency: string;
-  reference?: string;
+  title?: string;
   description?: string;
-  customer_email?: string;
-  customer_name?: string;
-  webhook_url?: string;
-  redirect_url?: string;
+  reference_id?: string;
+  custom_fields?: Record<string, any>;
+  customer_commission_percentage?: number;
+  multiple_use?: boolean;
+  customer_details?: Record<string, any>;
   metadata?: Record<string, any>;
+  expires_at?: string;
 }
 
 export interface Payment {
-  id: string;
-  amount: number;
-  currency: string;
-  status: PaymentStatus;
-  reference?: string;
+  id?: number;
+  transaction_id?: number;
+  title?: string;
   description?: string;
-  customer_email?: string;
-  customer_name?: string;
-  webhook_url?: string;
-  redirect_url?: string;
+  reference_id?: string;
   payment_url?: string;
-  qr_code?: string;
-  metadata?: Record<string, any>;
-  created_at: string;
-  updated_at: string;
+  amount?: number;
+  currency?: string;
+  status?: PaymentStatus;
   expires_at?: string;
+  custom_fields?: Record<string, any>;
+  customer_commission_percentage?: number;
+  multiple_use?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  paid_at?: string;
+  customer_details?: Record<string, any>;
+  metadata?: Record<string, any>;
+  payment_details?: Record<string, any>;
 }
 
 export type PaymentStatus = 

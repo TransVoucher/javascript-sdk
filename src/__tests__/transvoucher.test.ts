@@ -103,19 +103,95 @@ describe('TransVoucher', () => {
   });
 
   describe('services access', () => {
+    let client: TransVoucher;
+
+    beforeEach(() => {
+      client = TransVoucher.sandbox('test-api-key-123456789');
+    });
+
     it('should provide access to payments service', () => {
-      const client = TransVoucher.sandbox('test-api-key-123456789');
       expect(client.payments).toBeDefined();
       expect(typeof client.payments.create).toBe('function');
       expect(typeof client.payments.getStatus).toBe('function');
       expect(typeof client.payments.list).toBe('function');
     });
 
+    it('should provide payment utility methods', () => {
+      const payment = {
+        id: 1,
+        amount: 100,
+        currency: 'USD',
+        status: 'completed' as const
+      };
+
+      expect(client.payments.isCompleted(payment)).toBe(true);
+      expect(client.payments.isPending(payment)).toBe(false);
+      expect(client.payments.isFailed(payment)).toBe(false);
+      expect(client.payments.isExpired(payment)).toBe(false);
+    });
+
     it('should provide access to webhooks utilities', () => {
-      const client = TransVoucher.sandbox('test-api-key-123456789');
       expect(client.webhooks).toBeDefined();
       expect(typeof client.webhooks.verifySignature).toBe('function');
       expect(typeof client.webhooks.parseEvent).toBe('function');
+    });
+  });
+
+  describe('payment creation validation', () => {
+    let client: TransVoucher;
+
+    beforeEach(() => {
+      client = TransVoucher.sandbox('test-api-key-123456789');
+    });
+
+    it('should validate required fields', async () => {
+      await expect(client.payments.create({
+        amount: 0,
+        currency: ''
+      })).rejects.toThrow(ValidationError);
+    });
+
+    it('should validate customer commission percentage', async () => {
+      await expect(client.payments.create({
+        amount: 100,
+        currency: 'USD',
+        customer_commission_percentage: 101
+      })).rejects.toThrow(ValidationError);
+    });
+
+    it('should validate multiple_use field', async () => {
+      await expect(client.payments.create({
+        amount: 100,
+        currency: 'USD',
+        multiple_use: 'yes' as any
+      })).rejects.toThrow(ValidationError);
+    });
+
+    it('should accept valid payment creation data', async () => {
+      const paymentData = {
+        amount: 100,
+        currency: 'USD',
+        title: 'Test Payment',
+        description: 'Test payment description',
+        reference_id: 'TEST-001',
+        customer_commission_percentage: 5,
+        multiple_use: true,
+        customer_details: {
+          email: 'test@example.com',
+          name: 'Test User'
+        }
+      };
+
+      // Mock the HTTP client to prevent actual API calls
+      client['httpClient'].post = jest.fn().mockResolvedValue({
+        success: true,
+        data: { ...paymentData, id: 1 }
+      });
+
+      const payment = await client.payments.create(paymentData);
+      expect(payment.id).toBeDefined();
+      expect(payment.customer_commission_percentage).toBe(5);
+      expect(payment.multiple_use).toBe(true);
     });
   });
 }); 

@@ -35,8 +35,16 @@ const client = TransVoucher.production('your-api-key');
 const payment = await client.payments.create({
   amount: 100.00,
   currency: 'USD',
+  title: 'Test Payment',
   description: 'Test payment',
-  customer_email: 'customer@example.com'
+  reference_id: 'ORDER-123',
+  customer_commission_percentage: 5,
+  multiple_use: false,
+  customer_details: {
+    email: 'customer@example.com',
+    name: 'John Doe',
+    phone: '+1234567890'
+  }
 });
 
 console.log('Payment created:', payment.id);
@@ -80,27 +88,59 @@ if (client.isProduction()) {
 
 ```typescript
 const payment = await client.payments.create({
+  // Required fields
   amount: 100.00,
   currency: 'USD',
-  reference: 'order-123', // optional
-  description: 'Order payment', // optional
-  customer_email: 'customer@example.com', // optional
-  customer_name: 'John Doe', // optional
-  webhook_url: 'https://yoursite.com/webhook', // optional
-  redirect_url: 'https://yoursite.com/success', // optional
-  metadata: { // optional
+
+  // Optional fields
+  title: 'Product Purchase', // optional - title of the payment link
+  description: 'Order payment', // optional - description of the payment
+  reference_id: 'order-123', // optional - your reference ID
+  customer_commission_percentage: 5, // optional - commission percentage for customer (0-100)
+  multiple_use: false, // optional - whether the payment link can be used multiple times
+  expires_at: '2025-12-31T23:59:59Z', // optional - when the payment link expires
+  
+  // Customer details (optional)
+  customer_details: {
+    email: 'customer@example.com',
+    name: 'John Doe',
+    phone: '+1333999999',
+    date_of_birth: '1992-12-21',
+    country_of_residence: 'UK'
+  },
+
+  // Additional data (optional)
+  custom_fields: { // optional custom fields
+    order_type: 'subscription',
+    product_id: 'PRD-123'
+  },
+  metadata: { // optional metadata
     order_id: '123',
     user_id: '456'
   }
 });
+
+// Helper methods for payment status
+if (client.payments.isCompleted(payment)) {
+  console.log('Payment is completed');
+} else if (client.payments.isPending(payment)) {
+  console.log('Payment is pending');
+} else if (client.payments.isFailed(payment)) {
+  console.log('Payment has failed');
+} else if (client.payments.isExpired(payment)) {
+  console.log('Payment has expired');
+}
 ```
 
 #### Get Payment Status
 
 ```typescript
-const payment = await client.payments.getStatus('payment-id');
+const payment = await client.payments.getStatus(123); // Note: payment ID is now a number
 console.log('Status:', payment.status);
 console.log('Amount:', payment.amount);
+console.log('Transaction ID:', payment.transaction_id);
+console.log('Customer Commission:', payment.customer_commission_percentage);
+console.log('Multiple Use:', payment.multiple_use);
 ```
 
 #### List Payments
@@ -308,13 +348,12 @@ app.post('/webhook', async (req, res) => {
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-## License
-
-This SDK is released under the [MIT License](LICENSE).
-
 ## Support
 
-For support, please contact us at:
-- Email: developers@transvoucher.com
-- Documentation: https://docs.transvoucher.com
-- GitHub Issues: https://github.com/transvoucher/typescript-sdk/issues 
+- **Documentation**: [https://transvoucher.com/api-documentation](https://transvoucher.com/api-documentation)
+- **Email**: developers@transvoucher.com
+- **Telegram**: @kevin_tvoucher
+
+## License
+
+This SDK is released under the MIT License. See [LICENSE](LICENSE) for details. 
