@@ -24,31 +24,36 @@ interface PaginatedResponse<T> extends ApiResponse<T> {
 interface CreatePaymentRequest {
     amount: number;
     currency: string;
-    reference?: string;
+    title?: string;
     description?: string;
-    customer_email?: string;
-    customer_name?: string;
-    webhook_url?: string;
-    redirect_url?: string;
+    reference_id?: string;
+    custom_fields?: Record<string, any>;
+    customer_commission_percentage?: number;
+    multiple_use?: boolean;
+    customer_details?: Record<string, any>;
     metadata?: Record<string, any>;
+    expires_at?: string;
 }
 interface Payment {
-    id: string;
-    amount: number;
-    currency: string;
-    status: PaymentStatus;
-    reference?: string;
+    id?: number;
+    transaction_id?: number;
+    title?: string;
     description?: string;
-    customer_email?: string;
-    customer_name?: string;
-    webhook_url?: string;
-    redirect_url?: string;
+    reference_id?: string;
     payment_url?: string;
-    qr_code?: string;
-    metadata?: Record<string, any>;
-    created_at: string;
-    updated_at: string;
+    amount?: number;
+    currency?: string;
+    status?: PaymentStatus;
     expires_at?: string;
+    custom_fields?: Record<string, any>;
+    customer_commission_percentage?: number;
+    multiple_use?: boolean;
+    created_at?: string;
+    updated_at?: string;
+    paid_at?: string;
+    customer_details?: Record<string, any>;
+    metadata?: Record<string, any>;
+    payment_details?: Record<string, any>;
 }
 type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'expired' | 'cancelled';
 interface PaymentListRequest {
@@ -122,7 +127,11 @@ declare class PaymentService {
     private httpClient;
     constructor(httpClient: HttpClient);
     create(data: CreatePaymentRequest, options?: RequestOptions): Promise<Payment>;
-    getStatus(paymentId: string, options?: RequestOptions): Promise<Payment>;
+    getStatus(paymentId: number, options?: RequestOptions): Promise<Payment>;
+    isCompleted(payment: Payment): boolean;
+    isPending(payment: Payment): boolean;
+    isFailed(payment: Payment): boolean;
+    isExpired(payment: Payment): boolean;
     list(params?: PaymentListRequest, options?: RequestOptions): Promise<PaymentList>;
     getByReference(reference: string, options?: RequestOptions): Promise<Payment | null>;
     private validateCreatePaymentRequest;
