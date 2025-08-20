@@ -188,12 +188,12 @@ app.post('/webhook', async (req, res) => {
     
     // Handle different event types
     switch (event.type) {
-      case 'payment.completed':
+      case 'payment_intent.succeeded':
         console.log('🎉 Payment completed:', event.data.amount, event.data.currency);
         // Add your business logic here
         break;
         
-      case 'payment.failed':
+      case 'payment_intent.failed':
         console.log('❌ Payment failed:', event.data.id);
         // Handle failed payment
         break;

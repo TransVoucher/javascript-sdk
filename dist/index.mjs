@@ -282,11 +282,6 @@ var PaymentService = class {
     if (data.reference_id && (typeof data.reference_id !== "string" || data.reference_id.length > 255)) {
       errors.reference_id = ["Reference ID must be a string with maximum 255 characters"];
     }
-    if (data.customer_commission_percentage !== void 0) {
-      if (typeof data.customer_commission_percentage !== "number" || data.customer_commission_percentage < 0 || data.customer_commission_percentage > 100) {
-        errors.customer_commission_percentage = ["Customer commission percentage must be a number between 0 and 100"];
-      }
-    }
     if (data.multiple_use !== void 0 && typeof data.multiple_use !== "boolean") {
       errors.multiple_use = ["Multiple use must be a boolean"];
     }
@@ -417,27 +412,21 @@ var WebhookUtils = class {
         error: "Event data must be an object"
       };
     }
-    if (!eventData.id || typeof eventData.id !== "string") {
-      return {
-        isValid: false,
-        error: "Event must have a valid ID"
-      };
-    }
-    if (!eventData.type || typeof eventData.type !== "string") {
+    if (!eventData.event || typeof eventData.event !== "string") {
       return {
         isValid: false,
         error: "Event must have a valid type"
       };
     }
     const validEventTypes = [
-      "payment.created",
-      "payment.processing",
-      "payment.completed",
-      "payment.failed",
-      "payment.expired",
-      "payment.cancelled"
+      "payment_intent.created",
+      "payment_intent.processing",
+      "payment_intent.succeeded",
+      "payment_intent.failed",
+      "payment_intent.cancelled",
+      "payment_intent.expired"
     ];
-    if (!validEventTypes.includes(eventData.type)) {
+    if (!validEventTypes.includes(eventData.event)) {
       return {
         isValid: false,
         error: `Invalid event type: ${eventData.type}`
@@ -449,35 +438,53 @@ var WebhookUtils = class {
         error: "Event must have valid data"
       };
     }
-    if (!eventData.created_at || typeof eventData.created_at !== "string") {
+    if (!eventData.timestamp || typeof eventData.timestamp !== "string") {
       return {
         isValid: false,
-        error: "Event must have a valid created_at timestamp"
+        error: "Event must have a valid timestamp"
       };
     }
-    const paymentData = eventData.data;
-    if (!paymentData.id || typeof paymentData.id !== "string") {
+    if (!eventData.data || typeof eventData.data !== "object") {
       return {
         isValid: false,
-        error: "Payment data must have a valid ID"
+        error: "Event must have valid data"
       };
     }
-    if (typeof paymentData.amount !== "number" || paymentData.amount <= 0) {
+    const transaction = eventData.data.transaction;
+    if (!transaction || typeof transaction !== "object") {
       return {
         isValid: false,
-        error: "Payment data must have a valid amount"
+        error: "Event data must have a valid transaction object"
       };
     }
-    if (!paymentData.currency || typeof paymentData.currency !== "string") {
+    if (!transaction.id || typeof transaction.id !== "string") {
       return {
         isValid: false,
-        error: "Payment data must have a valid currency"
+        error: "Transaction must have a valid ID"
       };
     }
-    if (!paymentData.status || typeof paymentData.status !== "string") {
+    if (!transaction.reference_id || typeof transaction.reference_id !== "string") {
       return {
         isValid: false,
-        error: "Payment data must have a valid status"
+        error: "Transaction must have a valid reference_id"
+      };
+    }
+    if (typeof transaction.amount !== "number" || transaction.amount <= 0) {
+      return {
+        isValid: false,
+        error: "Transaction must have a valid amount"
+      };
+    }
+    if (!transaction.currency || typeof transaction.currency !== "string") {
+      return {
+        isValid: false,
+        error: "Transaction must have a valid currency"
+      };
+    }
+    if (!transaction.status || typeof transaction.status !== "string") {
+      return {
+        isValid: false,
+        error: "Transaction must have a valid status"
       };
     }
     return { isValid: true };
@@ -522,7 +529,7 @@ var WebhookUtils = class {
       if (!result.isValid || !result.event) {
         throw new TransVoucherError(result.error || "Invalid webhook event");
       }
-      const handler = handlers[result.event.type];
+      const handler = handlers[result.event.event];
       if (handler) {
         await handler(result.event);
       }

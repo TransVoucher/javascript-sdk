@@ -13,14 +13,15 @@ async function createPaymentExample() {
     
     // Create a payment
     const payment = await client.payments.create({
+      title: '100 Test',
       amount: 100.00,
       currency: 'USD',
-      reference: 'order-' + Date.now(),
+      reference_id: 'order-' + Date.now(),
       description: 'Example payment for testing',
-      customer_email: 'customer@example.com',
-      customer_name: 'John Doe',
-      webhook_url: 'https://yoursite.com/webhook',
-      redirect_url: 'https://yoursite.com/success',
+      customer_details: {
+        email: 'customer@example.com',
+        full_name: 'John Doe',
+      },
       metadata: {
         order_id: '12345',
         user_id: '67890',

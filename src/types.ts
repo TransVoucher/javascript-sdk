@@ -29,24 +29,32 @@ export interface PaginatedResponse<T> extends ApiResponse<T> {
   meta?: PaginationMeta;
 }
 
+/**
+ * Request parameters for creating a payment link
+ */
 export interface CreatePaymentRequest {
   amount: number;
   currency: string;
-  title?: string;
+  title: string;  // Required - title of the payment link
   description?: string;
   reference_id?: string;
-  custom_fields?: Record<string, any>;
-  customer_commission_percentage?: number;
   multiple_use?: boolean;
-  customer_details?: Record<string, any>;
+  customer_details?: CustomerDetails;
+  /**
+   * Optional metadata object that can be used to send additional data that identifies 
+   * the customer or payment session. This data will be returned in webhooks and API responses.
+   */
   metadata?: Record<string, any>;
   expires_at?: string;
 }
 
+/**
+ * Payment object returned by the API
+ */
 export interface Payment {
   id?: number;
   transaction_id?: number;
-  title?: string;
+  title: string;  // Title is required when creating, always returned
   description?: string;
   reference_id?: string;
   payment_url?: string;
@@ -54,13 +62,17 @@ export interface Payment {
   currency?: string;
   status?: PaymentStatus;
   expires_at?: string;
-  custom_fields?: Record<string, any>;
   customer_commission_percentage?: number;
   multiple_use?: boolean;
   created_at?: string;
   updated_at?: string;
   paid_at?: string;
-  customer_details?: Record<string, any>;
+  customer_details?: CustomerDetails;
+  /**
+   * Metadata provided during payment link creation. Can be used to identify 
+   * the customer or payment session when webhooks are received or when 
+   * payment/transaction data is loaded from the API.
+   */
   metadata?: Record<string, any>;
   payment_details?: Record<string, any>;
 }
@@ -89,20 +101,61 @@ export interface PaymentList {
   meta: PaginationMeta;
 }
 
-export interface WebhookEvent {
+export interface TransactionData {
   id: string;
-  type: WebhookEventType;
-  data: Payment;
+  reference_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  payment_method: string;
   created_at: string;
+  updated_at: string;
+  paid_at?: string;
+}
+
+export interface SalesChannelData {
+  id: string;
+  name: string;
+  type: string;
+}
+
+export interface MerchantData {
+  id: string;
+  name: string;
+  company_name: string;
+}
+
+export interface WebhookEvent {
+  event: WebhookEventType;  // This is the event type
+  timestamp: string;
+  data: {
+    transaction: TransactionData;
+    sales_channel: SalesChannelData;
+    merchant: MerchantData;
+    payment_details: Record<string, any>;
+    customer_details?: CustomerDetails;
+    metadata?: Record<string, any>;
+  };
+}
+
+export interface CustomerDetails {
+  full_name: string;           // Required
+  id?: string;                 // Optional - Customer's unique identifier
+  email?: string;             // Optional
+  phone?: string;             // Optional
+  date_of_birth?: string;     // Optional - Format: YYYY-MM-DD
+  country_of_residence?: string; // Optional - ISO country code (e.g., 'US', 'GB')
+  state_of_residence?: string;  // Optional - Required if country_of_residence is 'US'
+  [key: string]: any;         // Allow additional fields
 }
 
 export type WebhookEventType = 
-  | 'payment.created'
-  | 'payment.processing'
-  | 'payment.completed'
-  | 'payment.failed'
-  | 'payment.expired'
-  | 'payment.cancelled';
+  | 'payment_intent.created'
+  | 'payment_intent.processing'
+  | 'payment_intent.succeeded'
+  | 'payment_intent.failed'
+  | 'payment_intent.cancelled'
+  | 'payment_intent.expired';
 
 export interface WebhookVerificationResult {
   isValid: boolean;

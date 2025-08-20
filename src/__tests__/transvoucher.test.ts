@@ -121,7 +121,8 @@ describe('TransVoucher', () => {
         id: 1,
         amount: 100,
         currency: 'USD',
-        status: 'completed' as const
+        status: 'completed' as const,
+        title: 'Test Payment'  // Adding required title field
       };
 
       expect(client.payments.isCompleted(payment)).toBe(true);
@@ -147,15 +148,8 @@ describe('TransVoucher', () => {
     it('should validate required fields', async () => {
       await expect(client.payments.create({
         amount: 0,
-        currency: ''
-      })).rejects.toThrow(ValidationError);
-    });
-
-    it('should validate customer commission percentage', async () => {
-      await expect(client.payments.create({
-        amount: 100,
-        currency: 'USD',
-        customer_commission_percentage: 101
+        currency: '',
+        title: 'Test Payment'  // Adding required title field
       })).rejects.toThrow(ValidationError);
     });
 
@@ -163,6 +157,7 @@ describe('TransVoucher', () => {
       await expect(client.payments.create({
         amount: 100,
         currency: 'USD',
+        title: 'Test Payment',  // Adding required title field
         multiple_use: 'yes' as any
       })).rejects.toThrow(ValidationError);
     });
@@ -174,11 +169,10 @@ describe('TransVoucher', () => {
         title: 'Test Payment',
         description: 'Test payment description',
         reference_id: 'TEST-001',
-        customer_commission_percentage: 5,
         multiple_use: true,
         customer_details: {
           email: 'test@example.com',
-          name: 'Test User'
+          full_name: 'Test User'  // Fix: use full_name instead of name
         }
       };
 
@@ -190,7 +184,6 @@ describe('TransVoucher', () => {
 
       const payment = await client.payments.create(paymentData);
       expect(payment.id).toBeDefined();
-      expect(payment.customer_commission_percentage).toBe(5);
       expect(payment.multiple_use).toBe(true);
     });
   });

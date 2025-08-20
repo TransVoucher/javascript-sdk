@@ -24,20 +24,18 @@ interface PaginatedResponse<T> extends ApiResponse<T> {
 interface CreatePaymentRequest {
     amount: number;
     currency: string;
-    title?: string;
+    title: string;
     description?: string;
     reference_id?: string;
-    custom_fields?: Record<string, any>;
-    customer_commission_percentage?: number;
     multiple_use?: boolean;
-    customer_details?: Record<string, any>;
+    customer_details?: CustomerDetails;
     metadata?: Record<string, any>;
     expires_at?: string;
 }
 interface Payment {
     id?: number;
     transaction_id?: number;
-    title?: string;
+    title: string;
     description?: string;
     reference_id?: string;
     payment_url?: string;
@@ -45,13 +43,12 @@ interface Payment {
     currency?: string;
     status?: PaymentStatus;
     expires_at?: string;
-    custom_fields?: Record<string, any>;
     customer_commission_percentage?: number;
     multiple_use?: boolean;
     created_at?: string;
     updated_at?: string;
     paid_at?: string;
-    customer_details?: Record<string, any>;
+    customer_details?: CustomerDetails;
     metadata?: Record<string, any>;
     payment_details?: Record<string, any>;
 }
@@ -70,13 +67,50 @@ interface PaymentList {
     payments: Payment[];
     meta: PaginationMeta;
 }
-interface WebhookEvent {
+interface TransactionData {
     id: string;
-    type: WebhookEventType;
-    data: Payment;
+    reference_id: string;
+    amount: number;
+    currency: string;
+    status: string;
+    payment_method: string;
     created_at: string;
+    updated_at: string;
+    paid_at?: string;
 }
-type WebhookEventType = 'payment.created' | 'payment.processing' | 'payment.completed' | 'payment.failed' | 'payment.expired' | 'payment.cancelled';
+interface SalesChannelData {
+    id: string;
+    name: string;
+    type: string;
+}
+interface MerchantData {
+    id: string;
+    name: string;
+    company_name: string;
+}
+interface WebhookEvent {
+    event: WebhookEventType;
+    timestamp: string;
+    data: {
+        transaction: TransactionData;
+        sales_channel: SalesChannelData;
+        merchant: MerchantData;
+        payment_details: Record<string, any>;
+        customer_details?: CustomerDetails;
+        metadata?: Record<string, any>;
+    };
+}
+interface CustomerDetails {
+    full_name: string;
+    id?: string;
+    email?: string;
+    phone?: string;
+    date_of_birth?: string;
+    country_of_residence?: string;
+    state_of_residence?: string;
+    [key: string]: any;
+}
+type WebhookEventType = 'payment_intent.created' | 'payment_intent.processing' | 'payment_intent.succeeded' | 'payment_intent.failed' | 'payment_intent.cancelled' | 'payment_intent.expired';
 interface WebhookVerificationResult {
     isValid: boolean;
     event?: WebhookEvent;

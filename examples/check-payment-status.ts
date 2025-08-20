@@ -21,7 +21,7 @@ async function checkPaymentStatusExample() {
     console.log('Payment ID:', payment.id);
     console.log('Status:', payment.status);
     console.log('Amount:', payment.amount, payment.currency);
-    console.log('Created at:', payment.created_at);
+    console.log('Created at:', payment_intent.created_at);
     console.log('Updated at:', payment.updated_at);
     
     if (payment.reference) {

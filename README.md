@@ -35,15 +35,14 @@ const client = TransVoucher.production('your-api-key');
 const payment = await client.payments.create({
   amount: 100.00,
   currency: 'USD',
-  title: 'Test Payment',
-  description: 'Test payment',
-  reference_id: 'ORDER-123',
-  customer_commission_percentage: 5,
-  multiple_use: false,
-  customer_details: {
-    email: 'customer@example.com',
-    name: 'John Doe',
-    phone: '+1234567890'
+  title: 'Test Payment',  // Required - title of the payment link
+  description: 'Test payment',  // Optional
+  reference_id: 'ORDER-123',  // Optional
+  multiple_use: false,  // Optional
+  customer_details: {  // Optional
+    full_name: 'John Doe',  // Required if customer_details is provided
+    email: 'customer@example.com',  // Optional
+    phone: '+1234567890'  // Optional
   }
 });
 
@@ -91,32 +90,32 @@ const payment = await client.payments.create({
   // Required fields
   amount: 100.00,
   currency: 'USD',
+  title: 'Product Purchase', // Required - title of the payment link
 
   // Optional fields
-  title: 'Product Purchase', // optional - title of the payment link
-  description: 'Order payment', // optional - description of the payment
-  reference_id: 'order-123', // optional - your reference ID
-  customer_commission_percentage: 5, // optional - commission percentage for customer (0-100)
-  multiple_use: false, // optional - whether the payment link can be used multiple times
-  expires_at: '2025-12-31T23:59:59Z', // optional - when the payment link expires
+  description: 'Order payment', // Optional - description of the payment
+  reference_id: 'order-123', // Optional - your reference ID
+  multiple_use: false, // Optional - whether the payment link can be used multiple times
+  expires_at: '2025-12-31T23:59:59Z', // Optional - when the payment link expires
   
   // Customer details (optional)
   customer_details: {
-    email: 'customer@example.com',
-    name: 'John Doe',
-    phone: '+1333999999',
-    date_of_birth: '1992-12-21',
-    country_of_residence: 'UK'
+    // learn more about this at: https://transvoucher.com/api-documentation#pre_fill
+    full_name: 'John Doe',           // Required if customer_details is provided
+    id: 'cust_123',                  // Optional - Customer's unique identifier
+    email: 'customer@example.com',   // Optional
+    phone: '+1333999999',            // Optional
+    date_of_birth: '1992-12-21',     // Optional - YYYY-MM-DD format
+    country_of_residence: 'US',      // Optional - ISO country code
+    state_of_residence: 'NY'         // Optional - Required for US customers
   },
-
-  // Additional data (optional)
-  custom_fields: { // optional custom fields
-    order_type: 'subscription',
-    product_id: 'PRD-123'
-  },
-  metadata: { // optional metadata
+  // Metadata (optional)
+  metadata: { 
+    // Optional - use this to identify the customer or payment session
+    // This data will be returned in webhooks and API responses
     order_id: '123',
-    user_id: '456'
+    user_id: '456',
+    session_id: '789'
   }
 });
 
@@ -204,11 +203,11 @@ if (result.isValid && result.event) {
 
 ```typescript
 const handler = WebhookUtils.createHandler('your-webhook-secret', {
-  'payment.completed': async (event) => {
+  'payment_intent.succeeded': async (event) => {
     console.log('Payment completed:', event.data.id);
     // Handle successful payment
   },
-  'payment.failed': async (event) => {
+  'payment_intent.failed': async (event) => {
     console.log('Payment failed:', event.data.id);
     // Handle failed payment
   }
@@ -302,10 +301,10 @@ app.post('/webhook', async (req, res) => {
     
     // Handle the event
     switch (result.event.type) {
-      case 'payment.completed':
+      case 'payment_intent.succeeded':
         console.log('Payment completed:', result.event.data.id);
         break;
-      case 'payment.failed':
+      case 'payment_intent.failed':
         console.log('Payment failed:', result.event.data.id);
         break;
       default:
@@ -337,12 +336,12 @@ app.post('/webhook', async (req, res) => {
 
 ## Available Webhook Events
 
-- `payment.created` - Payment was created
-- `payment.processing` - Payment is being processed
-- `payment.completed` - Payment was completed successfully
-- `payment.failed` - Payment failed
-- `payment.expired` - Payment expired
-- `payment.cancelled` - Payment was cancelled
+- `payment_intent.created` - Payment intent was created
+- `payment_intent.processing` - Payment attempt was started
+- `payment_intent.succeeded` - Payment attempt was completed successfully
+- `payment_intent.failed` - Payment intent failed
+- `payment_intent.cancelled` - Payment intent was cancelled
+- `payment_intent.expired` - Payment intent expired
 
 ## Contributing
 
@@ -350,7 +349,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## Support
 
-- **Documentation**: [https://transvoucher.com/api-documentation](https://transvoucher.com/api-documentation)
+- **API Documentation**: [https://transvoucher.com/api-documentation](https://transvoucher.com/api-documentation)
+- **Service Availability**: [https://transvoucher.com/api-documentation/service-availability](https://transvoucher.com/api-documentation/service-availability)
 - **Email**: developers@transvoucher.com
 - **Telegram**: @kevin_tvoucher
 

@@ -145,14 +145,6 @@ export class PaymentService {
       errors.reference_id = ['Reference ID must be a string with maximum 255 characters'];
     }
 
-    if (data.customer_commission_percentage !== undefined) {
-      if (typeof data.customer_commission_percentage !== 'number' || 
-          data.customer_commission_percentage < 0 || 
-          data.customer_commission_percentage > 100) {
-        errors.customer_commission_percentage = ['Customer commission percentage must be a number between 0 and 100'];
-      }
-    }
-
     if (data.multiple_use !== undefined && typeof data.multiple_use !== 'boolean') {
       errors.multiple_use = ['Multiple use must be a boolean'];
     }
