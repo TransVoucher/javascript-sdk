@@ -42,7 +42,7 @@ const payment = await client.payments.create({
   customer_details: {  // Optional
     full_name: 'John Doe',  // Required if customer_details is provided
     email: 'customer@example.com',  // Optional
-    phone: '+1234567890'  // Optional
+    phone: '+1234567890',  // Optional
   }
 });
 
@@ -108,6 +108,12 @@ const payment = await client.payments.create({
     date_of_birth: '1992-12-21',     // Optional - YYYY-MM-DD format
     country_of_residence: 'US',      // Optional - ISO country code
     state_of_residence: 'NY'         // Optional - Required for US customers
+    // if you want to prefill card information
+    card_country_code: 'US',
+    card_city: 'Montana',
+    card_state_code: 'MT',
+    card_post_code: '12345',
+    card_street: 'Street 123',
   },
   // Metadata (optional)
   metadata: { 
