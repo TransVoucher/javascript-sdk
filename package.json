@@ -1,6 +1,6 @@
 {
   "name": "@transvoucher/sdk",
-  "version": "1.0.3",
+  "version": "1.0.3-dev",
   "description": "Official TypeScript/JavaScript SDK for TransVoucher payment processing API",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -64,4 +64,4 @@
   "engines": {
     "node": ">=16.0.0"
   }
-} 
+}
