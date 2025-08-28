@@ -33,8 +33,8 @@ interface CreatePaymentRequest {
     expires_at?: string;
 }
 interface Payment {
-    id?: number;
-    transaction_id?: number;
+    id?: string;
+    transaction_id?: string;
     title: string;
     description?: string;
     reference_id?: string;
@@ -161,7 +161,7 @@ declare class PaymentService {
     private httpClient;
     constructor(httpClient: HttpClient);
     create(data: CreatePaymentRequest, options?: RequestOptions): Promise<Payment>;
-    getStatus(paymentId: number, options?: RequestOptions): Promise<Payment>;
+    getStatus(paymentId: string, options?: RequestOptions): Promise<Payment>;
     isCompleted(payment: Payment): boolean;
     isPending(payment: Payment): boolean;
     isFailed(payment: Payment): boolean;

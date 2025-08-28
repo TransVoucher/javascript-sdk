@@ -194,7 +194,7 @@ var PaymentService = class {
    * Get payment status by ID
    */
   async getStatus(paymentId, options) {
-    if (!paymentId || typeof paymentId !== "number") {
+    if (!paymentId) {
       throw new ValidationError("Payment ID is required and must be a number", {
         paymentId: ["Payment ID is required and must be a number"]
       });
