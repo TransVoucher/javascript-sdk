@@ -31,8 +31,8 @@ export class PaymentService {
   /**
    * Get payment status by ID
    */
-  async getStatus(paymentId: number, options?: RequestOptions): Promise<Payment> {
-    if (!paymentId || typeof paymentId !== 'number') {
+  async getStatus(paymentId: string, options?: RequestOptions): Promise<Payment> {
+    if (!paymentId) {
       throw new ValidationError('Payment ID is required and must be a number', {
         paymentId: ['Payment ID is required and must be a number']
       });

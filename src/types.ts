@@ -52,8 +52,8 @@ export interface CreatePaymentRequest {
  * Payment object returned by the API
  */
 export interface Payment {
-  id?: number;
-  transaction_id?: number;
+  id?: string;
+  transaction_id?: string;
   title: string;  // Title is required when creating, always returned
   description?: string;
   reference_id?: string;

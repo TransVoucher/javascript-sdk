@@ -118,7 +118,7 @@ describe('TransVoucher', () => {
 
     it('should provide payment utility methods', () => {
       const payment = {
-        id: 1,
+        id: '1',
         amount: 100,
         currency: 'USD',
         status: 'completed' as const,
