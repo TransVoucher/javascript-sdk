@@ -3,7 +3,6 @@ import { PaymentService } from './services/payment';
 import { WebhookUtils } from './utils/webhook';
 import { 
   TransVoucherConfig, 
-  TransVoucherError, 
   ValidationError 
 } from './types';
 

@@ -139,11 +139,14 @@ export interface WebhookEvent {
 }
 
 export interface CustomerDetails {
-  full_name: string;           // Required
+  full_name?: string;           // Required
+  first_name: string;          // Required
+  middle_name?: string;        // Required
+  last_name: string;           // Required
   id?: string;                 // Optional - Customer's unique identifier
-  email?: string;             // Optional
-  phone?: string;             // Optional
-  date_of_birth?: string;     // Optional - Format: YYYY-MM-DD
+  email?: string;              // Optional
+  phone?: string;              // Optional
+  date_of_birth?: string;      // Optional - Format: YYYY-MM-DD
   country_of_residence?: string; // Optional - ISO country code (e.g., 'US', 'GB')
   state_of_residence?: string;  // Optional - Required if country_of_residence is 'US'
   [key: string]: any;         // Allow additional fields

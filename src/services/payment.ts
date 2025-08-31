@@ -129,7 +129,7 @@ export class PaymentService {
     if (!data.currency) {
       errors.currency = ['Currency is required'];
     } else if (typeof data.currency !== 'string' || data.currency.length !== 3) {
-      errors.currency = ['Currency must be a 3-character string (e.g., USD, EUR)'];
+      errors.currency = ['Currency must be a 3-character string (USD, EUR, TRY)'];
     }
 
     // Optional field validations

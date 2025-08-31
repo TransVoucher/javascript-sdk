@@ -101,7 +101,9 @@ const payment = await client.payments.create({
   // Customer details (optional)
   customer_details: {
     // learn more about this at: https://transvoucher.com/api-documentation#pre_fill
-    full_name: 'John Doe',           // Required if customer_details is provided
+    first_name: 'John',          
+    middle_name: 'Jay',              // Optional
+    first_name: 'Doe',          
     id: 'cust_123',                  // Optional - Customer's unique identifier
     email: 'customer@example.com',   // Optional
     phone: '+1333999999',            // Optional

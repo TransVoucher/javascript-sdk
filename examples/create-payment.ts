@@ -20,7 +20,8 @@ async function createPaymentExample() {
       description: 'Example payment for testing',
       customer_details: {
         email: 'customer@example.com',
-        full_name: 'John Doe',
+        first_name: 'John',
+        last_name: 'Doe'
       },
       metadata: {
         order_id: '12345',

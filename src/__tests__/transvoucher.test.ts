@@ -172,7 +172,8 @@ describe('TransVoucher', () => {
         multiple_use: true,
         customer_details: {
           email: 'test@example.com',
-          full_name: 'Test User'  // Fix: use full_name instead of name
+          first_name: 'Test',
+          last_name: 'User'
         }
       };
 

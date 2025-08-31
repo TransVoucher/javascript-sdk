@@ -271,7 +271,7 @@ var PaymentService = class {
     if (!data.currency) {
       errors.currency = ["Currency is required"];
     } else if (typeof data.currency !== "string" || data.currency.length !== 3) {
-      errors.currency = ["Currency must be a 3-character string (e.g., USD, EUR)"];
+      errors.currency = ["Currency must be a 3-character string (USD, EUR, TRY)"];
     }
     if (data.title && (typeof data.title !== "string" || data.title.length > 255)) {
       errors.title = ["Title must be a string with maximum 255 characters"];
