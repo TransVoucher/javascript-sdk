@@ -55,7 +55,7 @@ var HttpClient = class {
         "Content-Type": "application/json",
         "Accept": "application/json",
         "Authorization": `Bearer ${this.config.apiKey}`,
-        "User-Agent": "TransVoucher-JavaScript-SDK/1.0.0"
+        "User-Agent": "TransVoucher-JavaScript-SDK/1.1.0"
       }
     });
     instance.interceptors.request.use(
@@ -184,7 +184,7 @@ var PaymentService = class {
    */
   async create(data, options) {
     this.validateCreatePaymentRequest(data);
-    const response = await this.httpClient.post("/payments", data, options);
+    const response = await this.httpClient.post("/payment/create", data, options);
     if (!response.success || !response.data) {
       throw new ValidationError("Invalid response from payment creation", {});
     }
@@ -193,13 +193,28 @@ var PaymentService = class {
   /**
    * Get payment status by ID
    */
-  async getStatus(paymentId, options) {
-    if (!paymentId) {
-      throw new ValidationError("Payment ID is required and must be a number", {
-        paymentId: ["Payment ID is required and must be a number"]
+  async getTransactionStatus(transactionId, options) {
+    if (!transactionId) {
+      throw new ValidationError("Transaction ID is required", {
+        transactionId: ["Transaction ID is required"]
       });
     }
-    const response = await this.httpClient.get(`/payments/${paymentId}`, void 0, options);
+    const response = await this.httpClient.get(`/payment/status/${transactionId}`, void 0, options);
+    if (!response.success || !response.data) {
+      throw new ValidationError("Invalid response from payment status check", {});
+    }
+    return response.data;
+  }
+  /**
+  * Get payment status by ID
+  */
+  async getPaymentLinkStatus(paymentLinkId, options) {
+    if (!paymentLinkId) {
+      throw new ValidationError("Payment Link ID is required and must be a number", {
+        paymentId: ["Payment Link ID is required and must be a number"]
+      });
+    }
+    const response = await this.httpClient.get(`/payment-link/status/${paymentLinkId}`, void 0, options);
     if (!response.success || !response.data) {
       throw new ValidationError("Invalid response from payment status check", {});
     }
@@ -210,6 +225,18 @@ var PaymentService = class {
    */
   isCompleted(payment) {
     return payment.status === "completed";
+  }
+  /**
+   * Check if the payment is attempting
+   */
+  isAttempting(payment) {
+    return payment.status === "attempting";
+  }
+  /**
+   * Check if the payment is processing
+   */
+  isProcessing(payment) {
+    return payment.status === "processing";
   }
   /**
    * Check if the payment is pending
@@ -230,36 +257,27 @@ var PaymentService = class {
     return payment.status === "expired";
   }
   /**
+   * Check if the payment has been cancelled
+   */
+  isCancelled(payment) {
+    return payment.status === "cancelled";
+  }
+  /**
    * List payments with optional filters
    */
   async list(params = {}, options) {
     this.validateListRequest(params);
     const queryParams = {};
-    if (params.page !== void 0) queryParams.page = params.page;
-    if (params.per_page !== void 0) queryParams.per_page = params.per_page;
+    if (params.limit !== void 0) queryParams.limit = params.limit;
+    if (params.page_token) queryParams.page_token = params.page_token;
     if (params.status) queryParams.status = params.status;
-    if (params.currency) queryParams.currency = params.currency;
     if (params.from_date) queryParams.from_date = params.from_date;
     if (params.to_date) queryParams.to_date = params.to_date;
-    if (params.reference) queryParams.reference = params.reference;
-    if (params.customer_email) queryParams.customer_email = params.customer_email;
     const response = await this.httpClient.get("/payments", queryParams, options);
     if (!response.success || !response.data) {
       throw new ValidationError("Invalid response from payment list", {});
     }
     return response.data;
-  }
-  /**
-   * Get payment by reference
-   */
-  async getByReference(reference, options) {
-    if (!reference || typeof reference !== "string") {
-      throw new ValidationError("Reference is required and must be a string", {
-        reference: ["Reference is required and must be a string"]
-      });
-    }
-    const response = await this.list({ reference }, options);
-    return response.payments.length > 0 ? response.payments[0] : null;
   }
   validateCreatePaymentRequest(data) {
     const errors = {};
@@ -271,16 +289,13 @@ var PaymentService = class {
     if (!data.currency) {
       errors.currency = ["Currency is required"];
     } else if (typeof data.currency !== "string" || data.currency.length !== 3) {
-      errors.currency = ["Currency must be a 3-character string (USD, EUR, TRY)"];
+      errors.currency = ["Currency must be a 3-character string (USD, EUR, NZD, TRY, INR)"];
     }
     if (data.title && (typeof data.title !== "string" || data.title.length > 255)) {
       errors.title = ["Title must be a string with maximum 255 characters"];
     }
     if (data.description && (typeof data.description !== "string" || data.description.length > 1e3)) {
       errors.description = ["Description must be a string with maximum 1000 characters"];
-    }
-    if (data.reference_id && (typeof data.reference_id !== "string" || data.reference_id.length > 255)) {
-      errors.reference_id = ["Reference ID must be a string with maximum 255 characters"];
     }
     if (data.multiple_use !== void 0 && typeof data.multiple_use !== "boolean") {
       errors.multiple_use = ["Multiple use must be a boolean"];
@@ -294,26 +309,20 @@ var PaymentService = class {
   }
   validateListRequest(params) {
     const errors = {};
-    if (params.page !== void 0 && (!Number.isInteger(params.page) || params.page < 1)) {
-      errors.page = ["Page must be a positive integer"];
+    if (params.limit !== void 0 && (!Number.isInteger(params.limit) || params.limit < 1 || params.limit > 100)) {
+      errors.limit = ["Limit must be an integer between 1 and 100"];
     }
-    if (params.per_page !== void 0 && (!Number.isInteger(params.per_page) || params.per_page < 1 || params.per_page > 100)) {
-      errors.per_page = ["Per page must be an integer between 1 and 100"];
+    if (params.page_token !== void 0 && typeof params.page_token !== "string") {
+      errors.page_token = ["Page token must be a string"];
     }
-    if (params.status && !["pending", "processing", "completed", "failed", "expired", "cancelled"].includes(params.status)) {
-      errors.status = ["Status must be one of: pending, processing, completed, failed, expired, cancelled"];
-    }
-    if (params.currency && (typeof params.currency !== "string" || params.currency.length !== 3)) {
-      errors.currency = ["Currency must be a 3-character string"];
+    if (params.status && !["pending", "attempting", "processing", "completed", "failed", "expired", "cancelled"].includes(params.status)) {
+      errors.status = ["Status must be one of: pending, attempting, processing, completed, failed, expired, cancelled"];
     }
     if (params.from_date && !this.isValidDate(params.from_date)) {
       errors.from_date = ["From date must be a valid date in YYYY-MM-DD format"];
     }
     if (params.to_date && !this.isValidDate(params.to_date)) {
       errors.to_date = ["To date must be a valid date in YYYY-MM-DD format"];
-    }
-    if (params.customer_email && !this.isValidEmail(params.customer_email)) {
-      errors.customer_email = ["Customer email must be a valid email address"];
     }
     if (Object.keys(errors).length > 0) {
       throw new ValidationError("Validation failed", errors);
@@ -393,14 +402,12 @@ var WebhookUtils = class {
    * Secure string comparison to prevent timing attacks
    */
   static secureCompare(a, b) {
-    if (a.length !== b.length) {
+    const bufA = Buffer.from(a);
+    const bufB = Buffer.from(b);
+    if (bufA.length !== bufB.length) {
       return false;
     }
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    }
-    return result === 0;
+    return crypto.timingSafeEqual(bufA, bufB);
   }
   /**
    * Validate webhook event structure
@@ -420,6 +427,7 @@ var WebhookUtils = class {
     }
     const validEventTypes = [
       "payment_intent.created",
+      "payment_intent.attempting",
       "payment_intent.processing",
       "payment_intent.succeeded",
       "payment_intent.failed",
@@ -463,22 +471,16 @@ var WebhookUtils = class {
         error: "Transaction must have a valid ID"
       };
     }
-    if (!transaction.reference_id || typeof transaction.reference_id !== "string") {
+    if (typeof transaction.commodity_amount !== "number" || transaction.commodity_amount <= 0) {
       return {
         isValid: false,
-        error: "Transaction must have a valid reference_id"
+        error: "Transaction must have a valid commodity_amount"
       };
     }
-    if (typeof transaction.amount !== "number" || transaction.amount <= 0) {
+    if (!transaction.commodity || typeof transaction.commodity !== "string") {
       return {
         isValid: false,
-        error: "Transaction must have a valid amount"
-      };
-    }
-    if (!transaction.currency || typeof transaction.currency !== "string") {
-      return {
-        isValid: false,
-        error: "Transaction must have a valid currency"
+        error: "Transaction must have a valid commodity"
       };
     }
     if (!transaction.status || typeof transaction.status !== "string") {

@@ -82,7 +82,7 @@ async function handleWebhookEvent(event: WebhookEvent): Promise<void> {
   console.log('Reference ID:', transaction.reference_id);
   console.log('Amount:', transaction.amount, transaction.currency);
   console.log('Status:', transaction.status);
-  console.log('Payment Method:', transaction.payment_method);
+  console.log('Payment Method:', JSON.stringify(transaction.payment_method));
   
   if (event.data.customer_details) {
     console.log('Customer Name:', event.data.customer_details.full_name);
@@ -94,6 +94,10 @@ async function handleWebhookEvent(event: WebhookEvent): Promise<void> {
   switch (event.event) {
     case 'payment_intent.created':
       await handlePaymentIntentCreated(event);
+      break;
+      
+    case 'payment_intent.attempting':
+      await handlePaymentIntentAttempting(event);
       break;
 
     case 'payment_intent.processing':
@@ -128,6 +132,23 @@ async function handleWebhookEvent(event: WebhookEvent): Promise<void> {
  */
 async function handlePaymentIntentCreated(event: WebhookEvent): Promise<void> {
   console.log('🆕 Payment intent created');
+  
+  const transaction = event.data.transaction;
+  
+  // Example: Log the payment intent creation
+  // await logPaymentIntent(transaction.id, transaction.reference_id);
+  
+  // Example: Initialize order status
+  // await initializeOrder(transaction.reference_id, transaction.amount, transaction.currency);
+  
+  console.log('📝 Payment intent logged');
+}
+
+/**
+ * Handle payment intent created event
+ */
+async function handlePaymentIntentAttempting(event: WebhookEvent): Promise<void> {
+  console.log('🆕 Payment attempting');
   
   const transaction = event.data.transaction;
   
@@ -240,6 +261,9 @@ async function handlePaymentIntentCancelled(event: WebhookEvent): Promise<void> 
 const webhookHandler = WebhookUtils.createHandler(WEBHOOK_SECRET, {
   'payment_intent.created': async (event) => {
     console.log('Handler: Payment intent created:', event.data.transaction.id);
+  },
+  'payment_intent.attempting': async (event) => {
+    console.log('Handler: Payment intent attempting:', event.data.transaction.id);
   },
   'payment_intent.processing': async (event) => {
     console.log('Handler: Payment intent processing:', event.data.transaction.id);

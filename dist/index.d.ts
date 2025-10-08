@@ -11,69 +11,84 @@ interface ApiResponse<T = any> {
     errors?: Record<string, string[]>;
 }
 interface PaginationMeta {
-    current_page: number;
-    from: number;
-    last_page: number;
-    per_page: number;
-    to: number;
-    total: number;
-}
-interface PaginatedResponse<T> extends ApiResponse<T> {
-    meta?: PaginationMeta;
+    has_more: boolean;
+    next_page_token?: string;
+    count: number;
 }
 interface CreatePaymentRequest {
     amount: number;
-    currency: string;
+    currency?: string;
     title: string;
     description?: string;
-    reference_id?: string;
-    multiple_use?: boolean;
-    customer_details?: CustomerDetails;
+    redirect_url?: string;
+    success_url?: string;
+    cancel_url?: string;
     metadata?: Record<string, any>;
+    customer_details?: CustomerDetails;
+    theme?: 'dark' | 'light';
+    lang?: 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'zh' | 'ja' | 'ko' | 'tr';
     expires_at?: string;
+    custom_fields?: Record<string, any>;
+    multiple_use?: boolean;
+    cancel_on_first_fail?: boolean;
+    [key: string]: any;
 }
 interface Payment {
-    id?: string;
+    id: string;
+    reference_id: string;
+    flow_type?: string;
     transaction_id?: string;
-    title: string;
-    description?: string;
-    reference_id?: string;
+    payment_link_id?: string;
     payment_url?: string;
-    amount?: number;
-    currency?: string;
-    status?: PaymentStatus;
-    expires_at?: string;
-    customer_commission_percentage?: number;
-    multiple_use?: boolean;
+    title?: string;
+    description?: string;
+    amount: number;
+    currency: string;
+    fiat_base_amount?: number;
+    fiat_total_amount?: number;
+    fiat_currency?: string;
+    commodity?: string;
+    commodity_amount?: number;
+    metadata?: Record<string, any>;
+    customer_details?: CustomerDetails;
+    status: PaymentStatus;
+    fail_reason?: string;
     created_at?: string;
     updated_at?: string;
     paid_at?: string;
-    customer_details?: CustomerDetails;
-    metadata?: Record<string, any>;
+    payment_method?: {
+        card_id?: string;
+        card_brand?: string;
+        payment_type?: string;
+        processed_through?: string;
+    };
     payment_details?: Record<string, any>;
+    [key: string]: any;
 }
-type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'expired' | 'cancelled';
+type PaymentStatus = 'pending' | 'attempting' | 'processing' | 'completed' | 'failed' | 'expired' | 'cancelled';
 interface PaymentListRequest {
-    page?: number;
-    per_page?: number;
+    limit?: number;
+    page_token?: string;
     status?: PaymentStatus;
-    currency?: string;
     from_date?: string;
     to_date?: string;
-    reference?: string;
-    customer_email?: string;
 }
 interface PaymentList {
     payments: Payment[];
-    meta: PaginationMeta;
+    has_more: boolean;
+    next_page_token?: string;
+    count: number;
 }
 interface TransactionData {
     id: string;
     reference_id: string;
-    amount: number;
-    currency: string;
-    status: string;
-    payment_method: string;
+    fiat_base_amount: number;
+    fiat_total_amount: number;
+    fiat_currency: string;
+    commodity_amount: number;
+    commodity: string;
+    network: string;
+    status: PaymentStatus;
     created_at: string;
     updated_at: string;
     paid_at?: string;
@@ -85,35 +100,40 @@ interface SalesChannelData {
 }
 interface MerchantData {
     id: string;
-    name: string;
     company_name: string;
 }
 interface WebhookEvent {
     event: WebhookEventType;
     timestamp: string;
     data: {
+        payment_link_id?: string;
         transaction: TransactionData;
         sales_channel: SalesChannelData;
         merchant: MerchantData;
-        payment_details: Record<string, any>;
+        payment_details?: Record<string, any>;
         customer_details?: CustomerDetails;
         metadata?: Record<string, any>;
+        fail_reason?: string;
     };
 }
 interface CustomerDetails {
-    full_name?: string;
-    first_name: string;
-    middle_name?: string;
-    last_name: string;
     id?: string;
     email?: string;
     phone?: string;
+    full_name?: string;
+    first_name?: string;
+    middle_name?: string;
+    last_name?: string;
     date_of_birth?: string;
     country_of_residence?: string;
     state_of_residence?: string;
-    [key: string]: any;
+    card_country_code?: string;
+    card_state_code?: string;
+    card_city?: string;
+    card_post_code?: string;
+    card_street?: string;
 }
-type WebhookEventType = 'payment_intent.created' | 'payment_intent.processing' | 'payment_intent.succeeded' | 'payment_intent.failed' | 'payment_intent.cancelled' | 'payment_intent.expired';
+type WebhookEventType = 'payment_intent.created' | 'payment_intent.attempting' | 'payment_intent.processing' | 'payment_intent.succeeded' | 'payment_intent.failed' | 'payment_intent.cancelled' | 'payment_intent.expired';
 interface WebhookVerificationResult {
     isValid: boolean;
     event?: WebhookEvent;
@@ -164,13 +184,16 @@ declare class PaymentService {
     private httpClient;
     constructor(httpClient: HttpClient);
     create(data: CreatePaymentRequest, options?: RequestOptions): Promise<Payment>;
-    getStatus(paymentId: string, options?: RequestOptions): Promise<Payment>;
+    getTransactionStatus(transactionId: string, options?: RequestOptions): Promise<Payment>;
+    getPaymentLinkStatus(paymentLinkId: string, options?: RequestOptions): Promise<Payment>;
     isCompleted(payment: Payment): boolean;
+    isAttempting(payment: Payment): boolean;
+    isProcessing(payment: Payment): boolean;
     isPending(payment: Payment): boolean;
     isFailed(payment: Payment): boolean;
     isExpired(payment: Payment): boolean;
+    isCancelled(payment: Payment): boolean;
     list(params?: PaymentListRequest, options?: RequestOptions): Promise<PaymentList>;
-    getByReference(reference: string, options?: RequestOptions): Promise<Payment | null>;
     private validateCreatePaymentRequest;
     private validateListRequest;
     private isValidEmail;
@@ -208,4 +231,4 @@ declare class TransVoucher {
     private validateConfig;
 }
 
-export { ApiError, type ApiResponse, AuthenticationError, type CreatePaymentRequest, HttpClient, NetworkError, type PaginatedResponse, type PaginationMeta, type Payment, type PaymentList, type PaymentListRequest, PaymentService, type PaymentStatus, type RequestOptions, TransVoucher, type TransVoucherConfig, TransVoucherError, ValidationError, type WebhookEvent, type WebhookEventType, WebhookUtils, type WebhookVerificationResult, TransVoucher as default };
+export { ApiError, type ApiResponse, AuthenticationError, type CreatePaymentRequest, HttpClient, NetworkError, type PaginationMeta, type Payment, type PaymentList, type PaymentListRequest, PaymentService, type PaymentStatus, type RequestOptions, TransVoucher, type TransVoucherConfig, TransVoucherError, ValidationError, type WebhookEvent, type WebhookEventType, WebhookUtils, type WebhookVerificationResult, TransVoucher as default };

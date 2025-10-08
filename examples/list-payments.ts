@@ -27,13 +27,13 @@ async function listPaymentsExample() {
     
     allPayments.payments.forEach((payment, index) => {
       console.log(`${index + 1}. ${payment.id} - ${payment.status} - ${payment.amount} ${payment.currency}`);
-      if (payment.reference) {
-        console.log(`   Reference: ${payment.reference}`);
+      if (payment.reference_id) {
+        console.log(`   Reference: ${payment.reference_id}`);
       }
       if (payment.description) {
         console.log(`   Description: ${payment.description}`);
       }
-      console.log(`   Created: ${payment_intent.created_at}\n`);
+      console.log(`   Created: ${payment.created_at}\n`);
     });
 
     // Example 2: Filter by status
@@ -62,7 +62,7 @@ async function listPaymentsExample() {
     
     console.log(`Found ${recentPayments.meta.total} payments in the last 30 days`);
     recentPayments.payments.forEach((payment, index) => {
-      console.log(`${index + 1}. ${payment.id} - ${payment.status} - ${payment_intent.created_at}`);
+      console.log(`${index + 1}. ${payment.id} - ${payment.status} - ${payment.created_at}`);
     });
 
     // Example 4: Filter by currency
@@ -77,23 +77,8 @@ async function listPaymentsExample() {
       console.log(`${index + 1}. ${payment.id} - $${payment.amount} - ${payment.status}`);
     });
 
-    // Example 5: Search by customer email
-    console.log('\n=== Example 5: Search by customer email ===');
-    const customerPayments = await client.payments.list({
-      customer_email: 'customer@example.com',
-      per_page: 3
-    });
-    
-    console.log(`Found ${customerPayments.meta.total} payments for customer@example.com`);
-    customerPayments.payments.forEach((payment, index) => {
-      console.log(`${index + 1}. ${payment.id} - ${payment.amount} ${payment.currency} - ${payment.status}`);
-      if (payment.customer_name) {
-        console.log(`   Customer: ${payment.customer_name}`);
-      }
-    });
-
-    // Example 6: Pagination example
-    console.log('\n=== Example 6: Pagination example ===');
+    // Example 5: Pagination example
+    console.log('\n=== Example 5: Pagination example ===');
     let currentPage = 1;
     const maxPages = 3; // Limit for demo purposes
     
@@ -118,8 +103,8 @@ async function listPaymentsExample() {
       }
     }
 
-    // Example 7: Complex filtering
-    console.log('\n=== Example 7: Complex filtering ===');
+    // Example 6: Complex filtering
+    console.log('\n=== Example 6: Complex filtering ===');
     const complexFilter = await client.payments.list({
       status: 'completed',
       currency: 'USD',

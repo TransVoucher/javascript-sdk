@@ -16,7 +16,6 @@ async function createPaymentExample() {
       title: '100 Test',
       amount: 100.00,
       currency: 'USD',
-      reference_id: 'order-' + Date.now(),
       description: 'Example payment for testing',
       customer_details: {
         email: 'customer@example.com',
@@ -33,13 +32,11 @@ async function createPaymentExample() {
     console.log('✅ Payment created successfully!');
     console.log('Payment ID:', payment.id);
     console.log('Payment URL:', payment.payment_url);
-    console.log('QR Code:', payment.qr_code);
     console.log('Status:', payment.status);
-    console.log('Amount:', payment.amount, payment.currency);
-    console.log('Reference:', payment.reference);
+    console.log('Amount:', payment.amount, payment.fiat_currency);
+    console.log('Reference:', payment.reference_id);
     console.log('Description:', payment.description);
-    console.log('Customer:', payment.customer_name, '<' + payment.customer_email + '>');
-    
+
     if (payment.expires_at) {
       console.log('Expires at:', payment.expires_at);
     }

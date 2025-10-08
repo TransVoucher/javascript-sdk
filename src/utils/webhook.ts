@@ -70,16 +70,14 @@ export class WebhookUtils {
    * Secure string comparison to prevent timing attacks
    */
   private static secureCompare(a: string, b: string): boolean {
-    if (a.length !== b.length) {
-      return false;
-    }
+      const bufA = Buffer.from(a);
+      const bufB = Buffer.from(b);
 
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    }
+      if (bufA.length !== bufB.length) {
+          return false;
+      }
 
-    return result === 0;
+      return crypto.timingSafeEqual(bufA, bufB);
   }
 
   /**
@@ -102,6 +100,7 @@ export class WebhookUtils {
 
     const validEventTypes = [
       'payment_intent.created',
+      'payment_intent.attempting',
       'payment_intent.processing',
       'payment_intent.succeeded',
       'payment_intent.failed',
@@ -154,24 +153,17 @@ export class WebhookUtils {
       };
     }
 
-    if (!transaction.reference_id || typeof transaction.reference_id !== 'string') {
+    if (typeof transaction.commodity_amount !== 'number' || transaction.commodity_amount <= 0) {
       return {
         isValid: false,
-        error: 'Transaction must have a valid reference_id'
+        error: 'Transaction must have a valid commodity_amount'
       };
     }
 
-    if (typeof transaction.amount !== 'number' || transaction.amount <= 0) {
+    if (!transaction.commodity || typeof transaction.commodity !== 'string') {
       return {
         isValid: false,
-        error: 'Transaction must have a valid amount'
-      };
-    }
-
-    if (!transaction.currency || typeof transaction.currency !== 'string') {
-      return {
-        isValid: false,
-        error: 'Transaction must have a valid currency'
+        error: 'Transaction must have a valid commodity'
       };
     }
 

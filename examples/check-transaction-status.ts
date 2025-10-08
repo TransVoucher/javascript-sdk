@@ -1,55 +1,47 @@
 /**
- * Example: Check Payment Status
+ * Example: Check Transaction Status
  * 
- * This example demonstrates how to check the status of a payment using the TransVoucher SDK.
+ * This example demonstrates how to check the status of a transaction using the TransVoucher SDK.
  */
 
 import TransVoucher from '../src/index';
 
-async function checkPaymentStatusExample() {
+async function checkTransactionStatusExample() {
   try {
     // Initialize the client
     const client = TransVoucher.sandbox('your-api-key-here');
     
-    // Replace with actual payment ID
-    const paymentId = 'payment-id-here';
+    // Replace with actual transaction ID
+    const transactionId = 'transaction-uuid-here';
     
-    // Get payment status
-    const payment = await client.payments.getStatus(paymentId);
+    // Get transaction status
+    const transaction = await client.payments.getTransactionStatus(transactionId);
 
-    console.log('✅ Payment status retrieved successfully!');
-    console.log('Payment ID:', payment.id);
-    console.log('Status:', payment.status);
-    console.log('Amount:', payment.amount, payment.currency);
-    console.log('Created at:', payment_intent.created_at);
-    console.log('Updated at:', payment.updated_at);
+    console.log('✅ Transaction status retrieved successfully!');
+    console.log('Transaction ID:', transaction.id);
+    console.log('Status:', transaction.status);
+    console.log('Amount:', transaction.fiat_total_amount, transaction.fiat_currency);
+    console.log('Created at:', transaction.created_at);
+    console.log('Updated at:', transaction.updated_at);
     
-    if (payment.reference) {
-      console.log('Reference:', payment.reference);
+    if (transaction.reference_id) {
+      console.log('Reference:', transaction.reference_id);
     }
     
-    if (payment.description) {
-      console.log('Description:', payment.description);
+    if (transaction.description) {
+      console.log('Description:', transaction.description);
+    }
+
+    if (transaction.payment_url) {
+      console.log('Payment URL:', transaction.payment_url);
     }
     
-    if (payment.customer_email) {
-      console.log('Customer:', payment.customer_name || 'N/A', '<' + payment.customer_email + '>');
-    }
-    
-    if (payment.payment_url) {
-      console.log('Payment URL:', payment.payment_url);
-    }
-    
-    if (payment.qr_code) {
-      console.log('QR Code:', payment.qr_code);
-    }
-    
-    if (payment.expires_at) {
-      const expiresAt = new Date(payment.expires_at);
+    if (transaction.expires_at) {
+      const expiresAt = new Date(transaction.expires_at);
       const now = new Date();
       const isExpired = expiresAt < now;
       
-      console.log('Expires at:', payment.expires_at);
+      console.log('Expires at:', transaction.expires_at);
       console.log('Is expired:', isExpired);
       
       if (!isExpired) {
@@ -59,14 +51,17 @@ async function checkPaymentStatusExample() {
       }
     }
     
-    if (payment.metadata) {
-      console.log('Metadata:', JSON.stringify(payment.metadata, null, 2));
+    if (transaction.metadata) {
+      console.log('Metadata:', JSON.stringify(transaction.metadata, null, 2));
     }
 
     // Status-specific actions
-    switch (payment.status) {
+    switch (transaction.status) {
       case 'pending':
         console.log('🟡 Payment is pending - waiting for customer action');
+        break;
+      case 'attempting':
+        console.log('🔵 Payment is being attempted');
         break;
       case 'processing':
         console.log('🔵 Payment is being processed');
@@ -84,11 +79,11 @@ async function checkPaymentStatusExample() {
         console.log('⚪ Payment was cancelled');
         break;
       default:
-        console.log('❓ Unknown payment status:', payment.status);
+        console.log('❓ Unknown transaction status:', transaction.status);
     }
 
   } catch (error) {
-    console.error('❌ Error checking payment status:');
+    console.error('❌ Error checking transaction status:');
     
     if (error instanceof Error) {
       console.error('Message:', error.message);
@@ -98,7 +93,7 @@ async function checkPaymentStatusExample() {
         console.error('Status code:', statusCode);
         
         if (statusCode === 404) {
-          console.error('Payment not found - please check the payment ID');
+          console.error('Payment not found - please check the transaction ID');
         } else if (statusCode === 401) {
           console.error('Authentication failed - please check your API key');
         }
@@ -111,7 +106,7 @@ async function checkPaymentStatusExample() {
 
 // Run the example
 if (require.main === module) {
-  checkPaymentStatusExample();
+  checkTransactionStatusExample();
 }
 
-export { checkPaymentStatusExample }; 
+export { checkTransactionStatusExample }; 

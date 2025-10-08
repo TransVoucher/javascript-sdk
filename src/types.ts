@@ -17,16 +17,9 @@ export interface ApiResponse<T = any> {
 }
 
 export interface PaginationMeta {
-  current_page: number;
-  from: number;
-  last_page: number;
-  per_page: number;
-  to: number;
-  total: number;
-}
-
-export interface PaginatedResponse<T> extends ApiResponse<T> {
-  meta?: PaginationMeta;
+  has_more: boolean;
+  next_page_token?: string;
+  count: number;
 }
 
 /**
@@ -34,51 +27,62 @@ export interface PaginatedResponse<T> extends ApiResponse<T> {
  */
 export interface CreatePaymentRequest {
   amount: number;
-  currency: string;
-  title: string;  // Required - title of the payment link
+  currency?: string;
+  title: string;
   description?: string;
-  reference_id?: string;
-  multiple_use?: boolean;
-  customer_details?: CustomerDetails;
-  /**
-   * Optional metadata object that can be used to send additional data that identifies 
-   * the customer or payment session. This data will be returned in webhooks and API responses.
-   */
+  redirect_url?: string;
+  success_url?: string;
+  cancel_url?: string;
   metadata?: Record<string, any>;
+  customer_details?: CustomerDetails;
+  theme?: 'dark' | 'light';
+  lang?: 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'zh' | 'ja' | 'ko' | 'tr';
   expires_at?: string;
+  custom_fields?: Record<string, any>;
+  multiple_use?: boolean;
+  cancel_on_first_fail?: boolean;
+  [key: string]: any; // Allow additional custom properties
 }
 
 /**
  * Payment object returned by the API
  */
 export interface Payment {
-  id?: string;
+  id: string;
+  reference_id: string;
+  flow_type?: string;
   transaction_id?: string;
-  title: string;  // Title is required when creating, always returned
-  description?: string;
-  reference_id?: string;
+  payment_link_id?: string;
   payment_url?: string;
-  amount?: number;
-  currency?: string;
-  status?: PaymentStatus;
-  expires_at?: string;
-  customer_commission_percentage?: number;
-  multiple_use?: boolean;
+  title?: string;
+  description?: string;
+  amount: number;
+  currency: string;
+  fiat_base_amount?: number;
+  fiat_total_amount?: number;
+  fiat_currency?: string;
+  commodity?: string;
+  commodity_amount?: number;
+  metadata?: Record<string, any>;
+  customer_details?: CustomerDetails;
+  status: PaymentStatus;
+  fail_reason?: string;
   created_at?: string;
   updated_at?: string;
   paid_at?: string;
-  customer_details?: CustomerDetails;
-  /**
-   * Metadata provided during payment link creation. Can be used to identify 
-   * the customer or payment session when webhooks are received or when 
-   * payment/transaction data is loaded from the API.
-   */
-  metadata?: Record<string, any>;
+  payment_method?: {
+    card_id?: string;
+    card_brand?: string;
+    payment_type?: string;
+    processed_through?: string;
+  };
   payment_details?: Record<string, any>;
+  [key: string]: any; // Allow additional custom properties
 }
 
 export type PaymentStatus = 
   | 'pending'
+  | 'attempting'
   | 'processing' 
   | 'completed'
   | 'failed'
@@ -86,28 +90,30 @@ export type PaymentStatus =
   | 'cancelled';
 
 export interface PaymentListRequest {
-  page?: number;
-  per_page?: number;
+  limit?: number;
+  page_token?: string;
   status?: PaymentStatus;
-  currency?: string;
   from_date?: string;
   to_date?: string;
-  reference?: string;
-  customer_email?: string;
 }
 
 export interface PaymentList {
   payments: Payment[];
-  meta: PaginationMeta;
+  has_more: boolean;
+  next_page_token?: string;
+  count: number;
 }
 
 export interface TransactionData {
   id: string;
   reference_id: string;
-  amount: number;
-  currency: string;
-  status: string;
-  payment_method: string;
+  fiat_base_amount: number;
+  fiat_total_amount: number;
+  fiat_currency: string;
+  commodity_amount: number;
+  commodity: string;
+  network: string;
+  status: PaymentStatus;
   created_at: string;
   updated_at: string;
   paid_at?: string;
@@ -121,39 +127,45 @@ export interface SalesChannelData {
 
 export interface MerchantData {
   id: string;
-  name: string;
   company_name: string;
 }
 
 export interface WebhookEvent {
-  event: WebhookEventType;  // This is the event type
+  event: WebhookEventType;
   timestamp: string;
   data: {
+    payment_link_id?: string;
     transaction: TransactionData;
     sales_channel: SalesChannelData;
     merchant: MerchantData;
-    payment_details: Record<string, any>;
+    payment_details?: Record<string, any>;
     customer_details?: CustomerDetails;
     metadata?: Record<string, any>;
+    fail_reason?: string;
   };
 }
 
 export interface CustomerDetails {
-  full_name?: string;           // Required
-  first_name: string;          // Required
-  middle_name?: string;        // Required
-  last_name: string;           // Required
-  id?: string;                 // Optional - Customer's unique identifier
-  email?: string;              // Optional
-  phone?: string;              // Optional
-  date_of_birth?: string;      // Optional - Format: YYYY-MM-DD
-  country_of_residence?: string; // Optional - ISO country code (e.g., 'US', 'GB')
-  state_of_residence?: string;  // Optional - Required if country_of_residence is 'US'
-  [key: string]: any;         // Allow additional fields
+  id?: string;
+  email?: string;
+  phone?: string;
+  full_name?: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  date_of_birth?: string;
+  country_of_residence?: string;
+  state_of_residence?: string;
+  card_country_code?: string;
+  card_state_code?: string;
+  card_city?: string;
+  card_post_code?: string;
+  card_street?: string;
 }
 
 export type WebhookEventType = 
   | 'payment_intent.created'
+  | 'payment_intent.attempting'
   | 'payment_intent.processing'
   | 'payment_intent.succeeded'
   | 'payment_intent.failed'

@@ -5,7 +5,6 @@ import {
   PaymentListRequest,
   PaymentList,
   ApiResponse,
-  PaginatedResponse,
   ValidationError,
   RequestOptions
 } from '../types';
@@ -19,7 +18,7 @@ export class PaymentService {
   async create(data: CreatePaymentRequest, options?: RequestOptions): Promise<Payment> {
     this.validateCreatePaymentRequest(data);
 
-    const response = await this.httpClient.post<Payment>('/payments', data, options);
+    const response = await this.httpClient.post<Payment>('/payment/create', data, options);
     
     if (!response.success || !response.data) {
       throw new ValidationError('Invalid response from payment creation', {});
@@ -31,14 +30,33 @@ export class PaymentService {
   /**
    * Get payment status by ID
    */
-  async getStatus(paymentId: string, options?: RequestOptions): Promise<Payment> {
-    if (!paymentId) {
-      throw new ValidationError('Payment ID is required and must be a number', {
-        paymentId: ['Payment ID is required and must be a number']
+  async getTransactionStatus(transactionId: string, options?: RequestOptions): Promise<Payment> {
+    if (!transactionId) {
+      throw new ValidationError('Transaction ID is required', {
+        transactionId: ['Transaction ID is required']
       });
     }
 
-    const response = await this.httpClient.get<Payment>(`/payments/${paymentId}`, undefined, options);
+    const response = await this.httpClient.get<Payment>(`/payment/status/${transactionId}`, undefined, options);
+    
+    if (!response.success || !response.data) {
+      throw new ValidationError('Invalid response from payment status check', {});
+    }
+
+    return response.data;
+  }
+
+    /**
+   * Get payment status by ID
+   */
+  async getPaymentLinkStatus(paymentLinkId: string, options?: RequestOptions): Promise<Payment> {
+    if (!paymentLinkId) {
+      throw new ValidationError('Payment Link ID is required and must be a number', {
+        paymentId: ['Payment Link ID is required and must be a number']
+      });
+    }
+
+    const response = await this.httpClient.get<Payment>(`/payment-link/status/${paymentLinkId}`, undefined, options);
     
     if (!response.success || !response.data) {
       throw new ValidationError('Invalid response from payment status check', {});
@@ -52,6 +70,20 @@ export class PaymentService {
    */
   isCompleted(payment: Payment): boolean {
     return payment.status === 'completed';
+  }
+
+  /**
+   * Check if the payment is attempting
+   */
+  isAttempting(payment: Payment): boolean {
+    return payment.status === 'attempting';
+  }
+
+  /**
+   * Check if the payment is processing
+   */
+  isProcessing(payment: Payment): boolean {
+    return payment.status === 'processing';
   }
 
   /**
@@ -76,44 +108,33 @@ export class PaymentService {
   }
 
   /**
+   * Check if the payment has been cancelled
+   */
+  isCancelled(payment: Payment): boolean {
+    return payment.status === 'cancelled';
+  }
+
+  /**
    * List payments with optional filters
    */
   async list(params: PaymentListRequest = {}, options?: RequestOptions): Promise<PaymentList> {
     this.validateListRequest(params);
 
     const queryParams: Record<string, any> = {};
-    
-    if (params.page !== undefined) queryParams.page = params.page;
-    if (params.per_page !== undefined) queryParams.per_page = params.per_page;
+
+    if (params.limit !== undefined) queryParams.limit = params.limit;
+    if (params.page_token) queryParams.page_token = params.page_token;
     if (params.status) queryParams.status = params.status;
-    if (params.currency) queryParams.currency = params.currency;
     if (params.from_date) queryParams.from_date = params.from_date;
     if (params.to_date) queryParams.to_date = params.to_date;
-    if (params.reference) queryParams.reference = params.reference;
-    if (params.customer_email) queryParams.customer_email = params.customer_email;
 
     const response = await this.httpClient.get<PaymentList>('/payments', queryParams, options);
-    
+
     if (!response.success || !response.data) {
       throw new ValidationError('Invalid response from payment list', {});
     }
 
     return response.data;
-  }
-
-  /**
-   * Get payment by reference
-   */
-  async getByReference(reference: string, options?: RequestOptions): Promise<Payment | null> {
-    if (!reference || typeof reference !== 'string') {
-      throw new ValidationError('Reference is required and must be a string', {
-        reference: ['Reference is required and must be a string']
-      });
-    }
-
-    const response = await this.list({ reference }, options);
-    
-    return response.payments.length > 0 ? response.payments[0] : null;
   }
 
   private validateCreatePaymentRequest(data: CreatePaymentRequest): void {
@@ -129,7 +150,7 @@ export class PaymentService {
     if (!data.currency) {
       errors.currency = ['Currency is required'];
     } else if (typeof data.currency !== 'string' || data.currency.length !== 3) {
-      errors.currency = ['Currency must be a 3-character string (USD, EUR, TRY)'];
+      errors.currency = ['Currency must be a 3-character string (USD, EUR, NZD, TRY, INR)'];
     }
 
     // Optional field validations
@@ -139,10 +160,6 @@ export class PaymentService {
 
     if (data.description && (typeof data.description !== 'string' || data.description.length > 1000)) {
       errors.description = ['Description must be a string with maximum 1000 characters'];
-    }
-
-    if (data.reference_id && (typeof data.reference_id !== 'string' || data.reference_id.length > 255)) {
-      errors.reference_id = ['Reference ID must be a string with maximum 255 characters'];
     }
 
     if (data.multiple_use !== undefined && typeof data.multiple_use !== 'boolean') {
@@ -161,20 +178,16 @@ export class PaymentService {
   private validateListRequest(params: PaymentListRequest): void {
     const errors: Record<string, string[]> = {};
 
-    if (params.page !== undefined && (!Number.isInteger(params.page) || params.page < 1)) {
-      errors.page = ['Page must be a positive integer'];
+    if (params.limit !== undefined && (!Number.isInteger(params.limit) || params.limit < 1 || params.limit > 100)) {
+      errors.limit = ['Limit must be an integer between 1 and 100'];
     }
 
-    if (params.per_page !== undefined && (!Number.isInteger(params.per_page) || params.per_page < 1 || params.per_page > 100)) {
-      errors.per_page = ['Per page must be an integer between 1 and 100'];
+    if (params.page_token !== undefined && typeof params.page_token !== 'string') {
+      errors.page_token = ['Page token must be a string'];
     }
 
-    if (params.status && !['pending', 'processing', 'completed', 'failed', 'expired', 'cancelled'].includes(params.status)) {
-      errors.status = ['Status must be one of: pending, processing, completed, failed, expired, cancelled'];
-    }
-
-    if (params.currency && (typeof params.currency !== 'string' || params.currency.length !== 3)) {
-      errors.currency = ['Currency must be a 3-character string'];
+    if (params.status && !['pending', 'attempting', 'processing', 'completed', 'failed', 'expired', 'cancelled'].includes(params.status)) {
+      errors.status = ['Status must be one of: pending, attempting, processing, completed, failed, expired, cancelled'];
     }
 
     if (params.from_date && !this.isValidDate(params.from_date)) {
@@ -183,10 +196,6 @@ export class PaymentService {
 
     if (params.to_date && !this.isValidDate(params.to_date)) {
       errors.to_date = ['To date must be a valid date in YYYY-MM-DD format'];
-    }
-
-    if (params.customer_email && !this.isValidEmail(params.customer_email)) {
-      errors.customer_email = ['Customer email must be a valid email address'];
     }
 
     if (Object.keys(errors).length > 0) {

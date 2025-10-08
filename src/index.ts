@@ -9,7 +9,6 @@ export type {
   TransVoucherConfig,
   ApiResponse,
   PaginationMeta,
-  PaginatedResponse,
   CreatePaymentRequest,
   Payment,
   PaymentStatus,

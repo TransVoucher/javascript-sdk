@@ -25,8 +25,6 @@ async function createPayment() {
       amount: 100.00,
       currency: 'USD',
       description: 'Test payment from JavaScript',
-      customer_email: 'customer@example.com',
-      customer_name: 'John Doe'
     });
 
     console.log('✅ Payment created!');
@@ -52,11 +50,11 @@ createPayment();
 // check-status.js
 const TransVoucher = require('@transvoucher/sdk').default;
 
-async function checkPaymentStatus(paymentId) {
+async function checkPaymentStatus(transactionId) {
   const client = TransVoucher.sandbox('your-api-key-here');
   
   try {
-    const payment = await client.payments.getStatus(paymentId);
+    const payment = await client.payments.getTransactionStatus(transactionId);
     
     console.log('Payment Status:', payment.status);
     console.log('Amount:', payment.amount, payment.currency);
@@ -192,6 +190,8 @@ app.post('/webhook', async (req, res) => {
         console.log('🎉 Payment completed:', event.data.amount, event.data.currency);
         // Add your business logic here
         break;
+
+    // ...
         
       case 'payment_intent.failed':
         console.log('❌ Payment failed:', event.data.id);

@@ -112,17 +112,18 @@ describe('TransVoucher', () => {
     it('should provide access to payments service', () => {
       expect(client.payments).toBeDefined();
       expect(typeof client.payments.create).toBe('function');
-      expect(typeof client.payments.getStatus).toBe('function');
+      expect(typeof client.payments.getTransactionStatus).toBe('function');
+      expect(typeof client.payments.getPaymentLinkStatus).toBe('function');
       expect(typeof client.payments.list).toBe('function');
     });
 
     it('should provide payment utility methods', () => {
       const payment = {
         id: '1',
+        reference_id: 'ref-123',
         amount: 100,
         currency: 'USD',
-        status: 'completed' as const,
-        title: 'Test Payment'  // Adding required title field
+        status: 'completed' as const
       };
 
       expect(client.payments.isCompleted(payment)).toBe(true);
@@ -148,16 +149,14 @@ describe('TransVoucher', () => {
     it('should validate required fields', async () => {
       await expect(client.payments.create({
         amount: 0,
-        currency: '',
-        title: 'Test Payment'  // Adding required title field
+        title: ''
       })).rejects.toThrow(ValidationError);
     });
 
     it('should validate multiple_use field', async () => {
       await expect(client.payments.create({
         amount: 100,
-        currency: 'USD',
-        title: 'Test Payment',  // Adding required title field
+        title: 'Test Payment',
         multiple_use: 'yes' as any
       })).rejects.toThrow(ValidationError);
     });
@@ -168,7 +167,6 @@ describe('TransVoucher', () => {
         currency: 'USD',
         title: 'Test Payment',
         description: 'Test payment description',
-        reference_id: 'TEST-001',
         multiple_use: true,
         customer_details: {
           email: 'test@example.com',
@@ -180,12 +178,18 @@ describe('TransVoucher', () => {
       // Mock the HTTP client to prevent actual API calls
       client['httpClient'].post = jest.fn().mockResolvedValue({
         success: true,
-        data: { ...paymentData, id: 1 }
+        data: {
+          id: '1',
+          reference_id: 'ref-123',
+          amount: 100,
+          currency: 'USD',
+          status: 'pending'
+        }
       });
 
       const payment = await client.payments.create(paymentData);
       expect(payment.id).toBeDefined();
-      expect(payment.multiple_use).toBe(true);
+      expect(payment.reference_id).toBeDefined();
     });
   });
 }); 

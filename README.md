@@ -33,20 +33,25 @@ const client = TransVoucher.production('your-api-key');
 
 // Create a payment
 const payment = await client.payments.create({
-  amount: 100.00,
-  currency: 'USD',
-  title: 'Test Payment',  // Required - title of the payment link
-  description: 'Test payment',  // Optional
-  reference_id: 'ORDER-123',  // Optional
-  multiple_use: false,  // Optional
-  customer_details: {  // Optional
-    full_name: 'John Doe',  // Required if customer_details is provided
-    email: 'customer@example.com',  // Optional
-    phone: '+1234567890',  // Optional
-  }
+    amount: 100.00,
+    title: 'Test Payment',  // Required - title of the payment link
+    currency: 'USD',  // Optional - defaults to USD (supported: USD, EUR, NZD, TRY, INR)
+    description: 'Test payment',  // Optional
+    multiple_use: false,  // Optional
+    customer_details: {  // Optional
+        first_name: 'John',            // Optional
+        last_name: 'Doe',              // Optional
+        email: 'customer@example.com', // Optional
+        phone: '+1234567890',          // Optional
+    },
+    metadata: {  // Optional - returned in webhooks and API responses
+        order_id: 'ORDER-123',
+        user_id: 'USER-456'
+    }
 });
 
 console.log('Payment created:', payment.id);
+console.log('Reference ID:', payment.reference_id);
 console.log('Payment URL:', payment.payment_url);
 ```
 
@@ -55,12 +60,12 @@ console.log('Payment URL:', payment.payment_url);
 ### Basic Configuration
 
 ```typescript
-import { TransVoucher } from '@transvoucher/sdk';
+import {TransVoucher} from '@transvoucher/sdk';
 
 const client = new TransVoucher({
-  apiKey: 'your-api-key',
-  environment: 'sandbox', // or 'production'
-  timeout: 30000 // optional, default is 30000ms
+    apiKey: 'your-api-key',
+    environment: 'sandbox', // or 'production'
+    timeout: 30000 // optional, default is 30000ms
 });
 ```
 
@@ -75,7 +80,7 @@ client.switchEnvironment('production');
 
 // Check current environment
 if (client.isProduction()) {
-  console.log('Running in production mode');
+    console.log('Running in production mode');
 }
 ```
 
@@ -87,92 +92,172 @@ if (client.isProduction()) {
 
 ```typescript
 const payment = await client.payments.create({
-  // Required fields
-  amount: 100.00,
-  currency: 'USD',
-  title: 'Product Purchase', // Required - title of the payment link
+    // Required fields
+    amount: 100.00,
+    title: 'Product Purchase', // Required - title of the payment link
 
-  // Optional fields
-  description: 'Order payment', // Optional - description of the payment
-  reference_id: 'order-123', // Optional - your reference ID
-  multiple_use: false, // Optional - whether the payment link can be used multiple times
-  expires_at: '2025-12-31T23:59:59Z', // Optional - when the payment link expires
-  
-  // Customer details (optional)
-  customer_details: {
-    // learn more about this at: https://transvoucher.com/api-documentation#pre_fill
-    first_name: 'John',          
-    middle_name: 'Jay',              // Optional
-    first_name: 'Doe',          
-    id: 'cust_123',                  // Optional - Customer's unique identifier
-    email: 'customer@example.com',   // Optional
-    phone: '+1333999999',            // Optional
-    date_of_birth: '1992-12-21',     // Optional - YYYY-MM-DD format
-    country_of_residence: 'US',      // Optional - ISO country code
-    state_of_residence: 'NY'         // Optional - Required for US customers
-    // if you want to prefill card information
-    card_country_code: 'US',
-    card_city: 'Montana',
-    card_state_code: 'MT',
-    card_post_code: '12345',
-    card_street: 'Street 123',
-  },
-  // Metadata (optional)
-  metadata: { 
-    // Optional - use this to identify the customer or payment session
-    // This data will be returned in webhooks and API responses
-    order_id: '123',
-    user_id: '456',
-    session_id: '789'
-  }
+    // Optional fields
+    currency: 'USD', // Optional - defaults to USD (supported: USD, EUR, NZD, TRY, INR)
+    description: 'Order payment', // Optional - description of the payment
+    multiple_use: false, // Optional - whether the payment link can be used multiple times
+    cancel_on_first_fail: false, // Optional - cancel payment link after first failed attempt
+    expires_at: '2025-12-31T23:59:59Z', // Optional - when the payment link expires
+
+    // URL redirects (optional)
+    redirect_url: 'https://example.com/redirect', // Optional - redirect after payment
+    success_url: 'https://example.com/success',   // Optional - redirect on success
+    cancel_url: 'https://example.com/cancel',     // Optional - redirect on cancel
+
+    // UI customization (optional)
+    theme: 'dark', // Optional - 'dark' or 'light'
+    lang: 'en',    // Optional - en, es, fr, de, it, pt, ru, zh, ja, ko, tr
+
+    // Customer details (optional)
+    customer_details: {
+        // Learn more: https://transvoucher.com/api-documentation#pre_fill
+        email: 'customer@example.com',   // Optional
+        phone: '+1333999999',            // Optional
+        full_name: 'John Doe',           // Optional
+        first_name: 'John',              // Optional
+        middle_name: 'Jay',              // Optional
+        last_name: 'Doe',                // Optional
+        date_of_birth: '1992-12-21',     // Optional - YYYY-MM-DD format
+        country_of_residence: 'US',      // Optional - ISO country code
+        state_of_residence: 'NY',        // Optional - Required for US customers
+        // Prefill card information (optional)
+        card_country_code: 'US',
+        card_state_code: 'MT',
+        card_city: 'Montana',
+        card_post_code: '12345',
+        card_street: 'Street 123',
+    },
+
+    // Custom fields (optional)
+    custom_fields: {
+        field1: 'value1',
+        field2: 'value2'
+    },
+
+    // Metadata (optional)
+    metadata: {
+        // Optional - use this to identify the customer or payment session
+        // This data will be returned in webhooks and API responses
+        order_id: '123',
+        user_id: '456',
+        session_id: '789'
+    },
+
+    // Any additional custom fields
+    // The interface is dynamically extensible - you can add any custom key-value pairs
+    custom_property: 'custom_value',
+    another_field: 123,
+    any_other_data: { nested: 'data' }
 });
 
 // Helper methods for payment status
 if (client.payments.isCompleted(payment)) {
-  console.log('Payment is completed');
+    console.log('Payment is completed');
+} else if (client.payments.isProcessing(payment)) {
+    console.log('Payment is processing');
+} else if (client.payments.isAttempting(payment)) {
+    console.log('Payment is being attempted');
 } else if (client.payments.isPending(payment)) {
-  console.log('Payment is pending');
+    console.log('Payment is pending');
 } else if (client.payments.isFailed(payment)) {
-  console.log('Payment has failed');
+    console.log('Payment has failed');
+} else if (client.payments.isCancelled(payment)) {
+    console.log('Payment was cancelled');
 } else if (client.payments.isExpired(payment)) {
-  console.log('Payment has expired');
+    console.log('Payment has expired');
 }
 ```
 
-#### Get Payment Status
+#### Get Transaction Status
 
 ```typescript
-const payment = await client.payments.getStatus(123); // Note: payment ID is now a number
+const payment = await client.payments.getTransactionStatus('...');
 console.log('Status:', payment.status);
-console.log('Amount:', payment.amount);
+console.log('Reference ID:', payment.reference_id);
+console.log('Currency:', payment.currency);
 console.log('Transaction ID:', payment.transaction_id);
-console.log('Customer Commission:', payment.customer_commission_percentage);
-console.log('Multiple Use:', payment.multiple_use);
+console.log('Payment URL:', payment.payment_url);
+
+// Access transaction details if available
+if (payment.fiat_base_amount) {
+    console.log('Base Amount:', payment.fiat_base_amount);
+    console.log('Total Amount:', payment.fiat_total_amount);
+    console.log('Commodity:', payment.commodity);
+    console.log('Commodity Amount:', payment.commodity_amount);
+}
+
+// Access payment method details if available
+if (payment.payment_method) {
+    console.log('Card Brand:', payment.payment_method.card_brand);
+    console.log('Payment Type:', payment.payment_method.payment_type);
+}
+```
+
+#### Get Payment Link Status
+
+```typescript
+const paymentLink = await client.payments.getPaymentLinkStatus('...');
+console.log('Status:', paymentLink.status);
+console.log('Reference ID:', paymentLink.reference_id);
+console.log('Currency:', paymentLink.currency);
+console.log('Transaction ID:', paymentLink.transaction_id);
+console.log('Payment URL:', paymentLink.payment_url);
+
+// Access transaction details if available
+if (paymentLink.fiat_base_amount) {
+    console.log('Base Amount:', paymentLink.fiat_base_amount);
+    console.log('Total Amount:', paymentLink.fiat_total_amount);
+    console.log('Commodity:', paymentLink.commodity);
+    console.log('Commodity Amount:', paymentLink.commodity_amount);
+}
+
+// Access payment method details if available
+if (paymentLink.payment_method) {
+    console.log('Card Brand:', paymentLink.payment_method.card_brand);
+    console.log('Payment Type:', paymentLink.payment_method.payment_type);
+}
 ```
 
 #### List Payments
 
+The API uses cursor-based pagination for efficient listing of payments.
+
 ```typescript
+// First page
 const result = await client.payments.list({
-  page: 1,
-  per_page: 10,
-  status: 'completed',
-  currency: 'USD',
-  from_date: '2024-01-01',
-  to_date: '2024-12-31',
-  customer_email: 'customer@example.com'
+    limit: 10,  // Optional - defaults to 10, max 100
+    status: 'completed',  // Optional - filter by status
+    from_date: '2024-01-01',  // Optional - filter by date range
+    to_date: '2024-12-31',
 });
 
 console.log('Payments:', result.payments);
-console.log('Total:', result.meta.total);
+console.log('Count:', result.count);
+console.log('Has more:', result.has_more);
+
+// Get next page if available
+if (result.has_more && result.next_page_token) {
+    const nextPage = await client.payments.list({
+        limit: 10,
+        page_token: result.next_page_token,
+        status: 'completed'
+    });
+    console.log('Next page payments:', nextPage.payments);
+}
 ```
 
 #### Get Payment by Reference
 
 ```typescript
+// Search for a payment using your custom reference in metadata
 const payment = await client.payments.getByReference('order-123');
 if (payment) {
-  console.log('Found payment:', payment.id);
+    console.log('Found payment:', payment.id);
+    console.log('Metadata:', payment.metadata);
 }
 ```
 
@@ -181,12 +266,12 @@ if (payment) {
 #### Verify Webhook Signature
 
 ```typescript
-import { WebhookUtils } from '@transvoucher/sdk';
+import {WebhookUtils} from '@transvoucher/sdk';
 
 const isValid = WebhookUtils.verifySignature(
-  payload, // string or Buffer
-  signature, // from X-TransVoucher-Signature header
-  'your-webhook-secret'
+    payload, // string or Buffer
+    signature, // from X-Webhook-Signature header
+    'your-api-secret' // your sales channel API secret
 );
 ```
 
@@ -194,43 +279,78 @@ const isValid = WebhookUtils.verifySignature(
 
 ```typescript
 const result = WebhookUtils.parseEvent(
-  payload,
-  signature,
-  'your-webhook-secret'
+    payload,
+    signature,
+    'your-api-secret'
 );
 
 if (result.isValid && result.event) {
-  console.log('Event type:', result.event.type);
-  console.log('Payment data:', result.event.data);
+    console.log('Event type:', result.event.event);
+    console.log('Transaction ID:', result.event.data.transaction.id);
+    console.log('Reference ID:', result.event.data.transaction.reference_id);
+    console.log('Amount:', result.event.data.transaction.fiat_total_amount);
+    console.log('Currency:', result.event.data.transaction.fiat_currency);
+    console.log('Status:', result.event.data.transaction.status);
+    console.log('Metadata:', result.event.data.metadata);
 } else {
-  console.error('Invalid webhook:', result.error);
+    console.error('Invalid webhook:', result.error);
 }
 ```
 
 #### Create Webhook Handler
 
 ```typescript
-const handler = WebhookUtils.createHandler('your-webhook-secret', {
-  'payment_intent.succeeded': async (event) => {
-    console.log('Payment completed:', event.data.id);
-    // Handle successful payment
-  },
-  'payment_intent.failed': async (event) => {
-    console.log('Payment failed:', event.data.id);
-    // Handle failed payment
-  }
+const handler = WebhookUtils.createHandler('your-api-secret', {
+    'payment_intent.created': async (event) => {
+        const transaction = event.data.transaction;
+        console.log('Payment intent created:', transaction.id);
+        // Optional: Log payment creation
+    },
+    'payment_intent.attempting': async (event) => {
+        const transaction = event.data.transaction;
+        console.log('Payment attempt started:', transaction.id);
+        // Optional: Update order status to "attempting"
+    },
+    'payment_intent.processing': async (event) => {
+        const transaction = event.data.transaction;
+        console.log('Payment is processing:', transaction.id);
+        // Optional: Update order status to "processing"
+    },
+    'payment_intent.succeeded': async (event) => {
+        const transaction = event.data.transaction;
+        console.log('Payment completed:', transaction.id);
+        console.log('Amount:', transaction.fiat_total_amount, transaction.fiat_currency);
+        console.log('Metadata:', event.data.metadata);
+        // Handle successful payment - update order status, send confirmation email, etc.
+    },
+    'payment_intent.failed': async (event) => {
+        const transaction = event.data.transaction;
+        console.log('Payment failed:', transaction.id);
+        console.log('Fail reason:', event.data.fail_reason);
+        // Handle failed payment - notify user, log error, etc.
+    },
+    'payment_intent.cancelled': async (event) => {
+        const transaction = event.data.transaction;
+        console.log('Payment cancelled:', transaction.id);
+        // Handle cancelled payment - update order status, notify user, etc.
+    },
+    'payment_intent.expired': async (event) => {
+        const transaction = event.data.transaction;
+        console.log('Payment expired:', transaction.id);
+        // Handle expired payment - update order status, etc.
+    }
 });
 
 // Use in your webhook endpoint
 app.post('/webhook', async (req, res) => {
-  try {
-    const signature = req.headers['x-transvoucher-signature'];
-    await handler(req.body, signature);
-    res.status(200).send('OK');
-  } catch (error) {
-    console.error('Webhook error:', error);
-    res.status(400).send('Bad Request');
-  }
+    try {
+        const signature = req.headers['x-webhook-signature'];
+        await handler(req.body, signature);
+        res.status(200).send('OK');
+    } catch (error) {
+        console.error('Webhook error:', error);
+        res.status(400).send('Bad Request');
+    }
 });
 ```
 
@@ -239,32 +359,32 @@ app.post('/webhook', async (req, res) => {
 The SDK provides specific error types for different scenarios:
 
 ```typescript
-import { 
-  TransVoucherError,
-  ValidationError,
-  AuthenticationError,
-  ApiError,
-  NetworkError
+import {
+    TransVoucherError,
+    ValidationError,
+    AuthenticationError,
+    ApiError,
+    NetworkError
 } from '@transvoucher/sdk';
 
 try {
-  const payment = await client.payments.create({
-    amount: 100,
-    currency: 'USD'
-  });
+    const payment = await client.payments.create({
+        amount: 100,
+        title: 'Test Payment'
+    });
 } catch (error) {
-  if (error instanceof ValidationError) {
-    console.log('Validation errors:', error.errors);
-  } else if (error instanceof AuthenticationError) {
-    console.log('Authentication failed');
-  } else if (error instanceof ApiError) {
-    console.log('API error:', error.message);
-    console.log('Status code:', error.statusCode);
-  } else if (error instanceof NetworkError) {
-    console.log('Network error:', error.message);
-  } else {
-    console.log('Unknown error:', error);
-  }
+    if (error instanceof ValidationError) {
+        console.log('Validation errors:', error.errors);
+    } else if (error instanceof AuthenticationError) {
+        console.log('Authentication failed');
+    } else if (error instanceof ApiError) {
+        console.log('API error:', error.message);
+        console.log('Status code:', error.statusCode);
+    } else if (error instanceof NetworkError) {
+        console.log('Network error:', error.message);
+    } else {
+        console.log('Unknown error:', error);
+    }
 }
 ```
 
@@ -273,57 +393,100 @@ try {
 The SDK is written in TypeScript and provides full type definitions:
 
 ```typescript
-import { Payment, PaymentStatus, CreatePaymentRequest } from '@transvoucher/sdk';
+import {Payment, PaymentStatus, CreatePaymentRequest, CustomerDetails} from '@transvoucher/sdk';
 
 const paymentData: CreatePaymentRequest = {
-  amount: 100.00,
-  currency: 'USD',
-  description: 'Test payment'
+    amount: 100.00,
+    title: 'Test Payment',
+    currency: 'USD',
+    description: 'Test payment',
+    theme: 'dark',
+    lang: 'en',
+    metadata: {
+        order_id: '123'
+    }
 };
 
 const payment: Payment = await client.payments.create(paymentData);
 const status: PaymentStatus = payment.status;
+const referenceId: string = payment.reference_id;
 ```
 
 ## Express.js Webhook Example
 
 ```typescript
 import express from 'express';
-import { WebhookUtils } from '@transvoucher/sdk';
+import {WebhookUtils} from '@transvoucher/sdk';
 
 const app = express();
 
 // Middleware to capture raw body for signature verification
-app.use('/webhook', express.raw({ type: 'application/json' }));
+app.use('/webhook', express.raw({type: 'application/json'}));
 
 app.post('/webhook', async (req, res) => {
-  try {
-    const signature = req.headers['x-transvoucher-signature'] as string;
-    const secret = process.env.TRANSVOUCHER_WEBHOOK_SECRET!;
-    
-    const result = WebhookUtils.parseEvent(req.body, signature, secret);
-    
-    if (!result.isValid || !result.event) {
-      return res.status(400).json({ error: result.error });
+    try {
+        const signature = req.headers['x-webhook-signature'] as string;
+        const secret = process.env.TRANSVOUCHER_API_SECRET!; // Your sales channel API secret
+
+        const result = WebhookUtils.parseEvent(req.body, signature, secret);
+
+        if (!result.isValid || !result.event) {
+            return res.status(400).json({error: result.error});
+        }
+
+        const {event, data} = result.event;
+        const transaction = data.transaction;
+
+        // Handle the event
+        switch (event) {
+            case 'payment_intent.created':
+                console.log('Payment created:', transaction.id);
+                // Optional: Log payment creation
+                break;
+
+            case 'payment_intent.attempting':
+                console.log('Payment attempt started:', transaction.id);
+                // Optional: Update order status
+                break;
+
+            case 'payment_intent.processing':
+                console.log('Payment processing:', transaction.id);
+                // Optional: Update order status
+                break;
+
+            case 'payment_intent.succeeded':
+                console.log('Payment completed:', transaction.id);
+                console.log('Amount:', transaction.fiat_total_amount, transaction.fiat_currency);
+                console.log('Reference:', transaction.reference_id);
+                console.log('Metadata:', data.metadata);
+                // Update your database, send confirmation email, etc.
+                break;
+
+            case 'payment_intent.failed':
+                console.log('Payment failed:', transaction.id);
+                console.log('Fail reason:', data.fail_reason);
+                // Notify customer, log error, etc.
+                break;
+
+            case 'payment_intent.cancelled':
+                console.log('Payment cancelled:', transaction.id);
+                // Handle cancellation
+                break;
+
+            case 'payment_intent.expired':
+                console.log('Payment expired:', transaction.id);
+                // Handle expiration
+                break;
+
+            default:
+                console.log('Unhandled event:', event);
+        }
+
+        res.status(200).json({received: true});
+    } catch (error) {
+        console.error('Webhook error:', error);
+        res.status(500).json({error: 'Internal server error'});
     }
-    
-    // Handle the event
-    switch (result.event.type) {
-      case 'payment_intent.succeeded':
-        console.log('Payment completed:', result.event.data.id);
-        break;
-      case 'payment_intent.failed':
-        console.log('Payment failed:', result.event.data.id);
-        break;
-      default:
-        console.log('Unhandled event:', result.event.type);
-    }
-    
-    res.status(200).json({ received: true });
-  } catch (error) {
-    console.error('Webhook error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
 });
 ```
 
@@ -336,6 +499,7 @@ app.post('/webhook', async (req, res) => {
 ## Available Payment Statuses
 
 - `pending` - Payment is awaiting processing
+- `attempting` - Payment is being attempted
 - `processing` - Payment is being processed
 - `completed` - Payment has been successfully completed
 - `failed` - Payment has failed
@@ -345,7 +509,8 @@ app.post('/webhook', async (req, res) => {
 ## Available Webhook Events
 
 - `payment_intent.created` - Payment intent was created
-- `payment_intent.processing` - Payment attempt was started
+- `payment_intent.attempting` - Payment attempt was started
+- `payment_intent.processing` - Payment is processing (not always sent)
 - `payment_intent.succeeded` - Payment attempt was completed successfully
 - `payment_intent.failed` - Payment intent failed
 - `payment_intent.cancelled` - Payment intent was cancelled
@@ -358,7 +523,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ## Support
 
 - **API Documentation**: [https://transvoucher.com/api-documentation](https://transvoucher.com/api-documentation)
-- **Service Availability**: [https://transvoucher.com/api-documentation/service-availability](https://transvoucher.com/api-documentation/service-availability)
+- **Service Availability
+  **: [https://transvoucher.com/api-documentation/service-availability](https://transvoucher.com/api-documentation/service-availability)
 - **Email**: developers@transvoucher.com
 - **Telegram**: @kevin_tvoucher
 
