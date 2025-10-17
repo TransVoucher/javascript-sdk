@@ -35,7 +35,7 @@ const client = TransVoucher.production('your-api-key');
 const payment = await client.payments.create({
     amount: 100.00,
     title: 'Test Payment',  // Required - title of the payment link
-    currency: 'USD',  // Optional - defaults to USD (supported: USD, EUR, NZD, TRY, INR)
+    currency: 'USD',  // Optional - defaults to USD (supported: USD, EUR, NZD, AUD, PLN, KES, TRY, INR)
     description: 'Test payment',  // Optional
     multiple_use: false,  // Optional
     customer_details: {  // Optional
@@ -97,7 +97,7 @@ const payment = await client.payments.create({
     title: 'Product Purchase', // Required - title of the payment link
 
     // Optional fields
-    currency: 'USD', // Optional - defaults to USD (supported: USD, EUR, NZD, TRY, INR)
+    currency: 'USD', // Optional - defaults to USD (supported: USD, EUR, NZD, AUD, PLN, KES, TRY, INR)
     description: 'Order payment', // Optional - description of the payment
     multiple_use: false, // Optional - whether the payment link can be used multiple times
     cancel_on_first_fail: false, // Optional - cancel payment link after first failed attempt
@@ -110,23 +110,39 @@ const payment = await client.payments.create({
 
     // UI customization (optional)
     theme: 'dark', // Optional - 'dark' or 'light'
-    lang: 'en',    // Optional - en, es, fr, de, it, pt, ru, zh, ja, ko, tr
+    lang: 'en',    // Optional - the language for the payment page - possible values: en, es, fr, de, it, pt, ru, zh, ja, ko, tr
 
     // Customer details (optional)
     customer_details: {
         // Learn more: https://transvoucher.com/api-documentation#pre_fill
         email: 'customer@example.com',   // Optional
         phone: '+1333999999',            // Optional
-        full_name: 'John Doe',           // Optional
+        
+        // as splits (recommended):
         first_name: 'John',              // Optional
         middle_name: 'Jay',              // Optional
         last_name: 'Doe',                // Optional
+
+        // OR as one field (not recommended!):
+        full_name: 'John Doe',           // Optional
+
         date_of_birth: '1992-12-21',     // Optional - YYYY-MM-DD format
-        country_of_residence: 'US',      // Optional - ISO country code
-        state_of_residence: 'NY',        // Optional - Required for US customers
-        // Prefill card information (optional)
-        card_country_code: 'US',
+        country_of_residence: 'US',      // Optional - alpha-2 country short code
+        state_of_residence: 'NY',        // Optional
+        // rules for usage of "state_of_residence":
+        // - if present, has to be a valid US state short code (alpha-2 uppercase)
+        // - required if "country_of_residence" is "US" (we will ask for it if you don't prefill it)
+        // - has to be dropped (not be in the payload) when "country_of_residence" is not "US"
+
+        // Prefill card billing address (optional)
+        card_country_code: 'US', // alpha-2 country short code
+
         card_state_code: 'MT',
+        // rules for usage of "card_state_code":
+        // - if present, has to be a valid US state short code (alpha-2 uppercase)
+        // - required if "card_country_code" is "US" (we will ask for it if you don't prefill it)
+        // - has to be dropped (not be in the payload) when "card_country_code" is not "US"
+
         card_city: 'Montana',
         card_post_code: '12345',
         card_street: 'Street 123',
