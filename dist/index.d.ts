@@ -16,7 +16,7 @@ interface PaginationMeta {
     count: number;
 }
 interface CreatePaymentRequest {
-    amount: number;
+    amount?: number;
     currency?: string;
     title: string;
     description?: string;
@@ -31,6 +31,7 @@ interface CreatePaymentRequest {
     custom_fields?: Record<string, any>;
     multiple_use?: boolean;
     cancel_on_first_fail?: boolean;
+    is_price_dynamic?: boolean;
     [key: string]: any;
 }
 interface Payment {

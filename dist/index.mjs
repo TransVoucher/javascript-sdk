@@ -281,10 +281,20 @@ var PaymentService = class {
   }
   validateCreatePaymentRequest(data) {
     const errors = {};
-    if (!data.amount) {
-      errors.amount = ["Amount is required"];
-    } else if (typeof data.amount !== "number" || data.amount <= 0) {
-      errors.amount = ["Amount must be a positive number"];
+    const isPriceDynamic = data.is_price_dynamic === true;
+    if (data.is_price_dynamic !== void 0 && typeof data.is_price_dynamic !== "boolean") {
+      errors.is_price_dynamic = ["is_price_dynamic must be a boolean"];
+    }
+    if (!isPriceDynamic) {
+      if (!data.amount) {
+        errors.amount = ["Amount is required"];
+      } else if (typeof data.amount !== "number" || data.amount <= 0) {
+        errors.amount = ["Amount must be a positive number"];
+      }
+    } else if (data.amount !== void 0) {
+      if (typeof data.amount !== "number" || data.amount <= 0) {
+        errors.amount = ["Amount must be a positive number"];
+      }
     }
     if (!data.currency) {
       errors.currency = ["Currency is required"];
@@ -299,6 +309,9 @@ var PaymentService = class {
     }
     if (data.multiple_use !== void 0 && typeof data.multiple_use !== "boolean") {
       errors.multiple_use = ["Multiple use must be a boolean"];
+    }
+    if (data.cancel_on_first_fail !== void 0 && typeof data.cancel_on_first_fail !== "boolean") {
+      errors.cancel_on_first_fail = ["cancel_on_first_fail must be a boolean"];
     }
     if (data.expires_at && !this.isValidDate(data.expires_at)) {
       errors.expires_at = ["Expires at must be a valid date"];
