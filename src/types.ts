@@ -26,7 +26,7 @@ export interface PaginationMeta {
  * Request parameters for creating a payment link
  */
 export interface CreatePaymentRequest {
-  amount: number;
+  amount?: number; // Optional when is_price_dynamic is true
   currency?: string;
   title: string;
   description?: string;
@@ -41,6 +41,7 @@ export interface CreatePaymentRequest {
   custom_fields?: Record<string, any>;
   multiple_use?: boolean;
   cancel_on_first_fail?: boolean;
+  is_price_dynamic?: boolean; // When true, allows customers to set their own amount
   [key: string]: any; // Allow additional custom properties
 }
 

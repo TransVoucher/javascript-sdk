@@ -93,7 +93,7 @@ if (client.isProduction()) {
 ```typescript
 const payment = await client.payments.create({
     // Required fields
-    amount: 100.00,
+    amount: 100.00, // Optional when is_price_dynamic is true
     title: 'Product Purchase', // Required - title of the payment link
 
     // Optional fields
@@ -101,6 +101,7 @@ const payment = await client.payments.create({
     description: 'Order payment', // Optional - description of the payment
     multiple_use: false, // Optional - whether the payment link can be used multiple times
     cancel_on_first_fail: false, // Optional - cancel payment link after first failed attempt
+    is_price_dynamic: false, // Optional - when true, allows customers to set their own amount during checkout (default: false)
     expires_at: '2025-12-31T23:59:59Z', // Optional - when the payment link expires
 
     // URL redirects (optional)
@@ -542,7 +543,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - **Service Availability
   **: [https://transvoucher.com/api-documentation/service-availability](https://transvoucher.com/api-documentation/service-availability)
 - **Email**: developers@transvoucher.com
-- **Telegram**: @kevin_tvoucher
+- **Telegram**: @{{ $brand_telegram_contact }}
 
 ## License
 

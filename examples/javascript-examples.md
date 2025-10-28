@@ -170,7 +170,7 @@ app.use(express.json());
 
 app.post('/webhook', async (req, res) => {
   try {
-    const signature = req.headers['x-transvoucher-signature'];
+    const signature = req.headers['X-Webhook-Signature'];
     const payload = req.body;
     
     // Verify and parse webhook

@@ -140,11 +140,26 @@ export class PaymentService {
   private validateCreatePaymentRequest(data: CreatePaymentRequest): void {
     const errors: Record<string, string[]> = {};
 
-    // Required fields
-    if (!data.amount) {
-      errors.amount = ['Amount is required'];
-    } else if (typeof data.amount !== 'number' || data.amount <= 0) {
-      errors.amount = ['Amount must be a positive number'];
+    // Check if dynamic pricing is enabled
+    const isPriceDynamic = data.is_price_dynamic === true;
+
+    // Validate is_price_dynamic if provided
+    if (data.is_price_dynamic !== undefined && typeof data.is_price_dynamic !== 'boolean') {
+      errors.is_price_dynamic = ['is_price_dynamic must be a boolean'];
+    }
+
+    // Amount is required unless dynamic pricing is enabled
+    if (!isPriceDynamic) {
+      if (!data.amount) {
+        errors.amount = ['Amount is required'];
+      } else if (typeof data.amount !== 'number' || data.amount <= 0) {
+        errors.amount = ['Amount must be a positive number'];
+      }
+    } else if (data.amount !== undefined) {
+      // If amount is provided with dynamic pricing, validate it anyway
+      if (typeof data.amount !== 'number' || data.amount <= 0) {
+        errors.amount = ['Amount must be a positive number'];
+      }
     }
 
     if (!data.currency) {
@@ -164,6 +179,10 @@ export class PaymentService {
 
     if (data.multiple_use !== undefined && typeof data.multiple_use !== 'boolean') {
       errors.multiple_use = ['Multiple use must be a boolean'];
+    }
+
+    if (data.cancel_on_first_fail !== undefined && typeof data.cancel_on_first_fail !== 'boolean') {
+      errors.cancel_on_first_fail = ['cancel_on_first_fail must be a boolean'];
     }
 
     if (data.expires_at && !this.isValidDate(data.expires_at)) {

@@ -25,7 +25,7 @@ app.use(express.json());
  */
 app.post('/webhook', async (req, res) => {
   try {
-    const signature = req.headers['x-transvoucher-signature'] as string;
+    const signature = req.headers['X-Webhook-Signature'] as string;
     const payload = req.body;
 
     console.log('📨 Webhook received');
@@ -285,7 +285,7 @@ const webhookHandler = WebhookUtils.createHandler(WEBHOOK_SECRET, {
 // Alternative endpoint using the handler utility
 app.post('/webhook-alt', async (req, res) => {
   try {
-    const signature = req.headers['x-transvoucher-signature'] as string;
+    const signature = req.headers['X-Webhook-Signature'] as string;
     await webhookHandler(req.body, signature);
     res.status(200).json({ received: true });
   } catch (error) {
