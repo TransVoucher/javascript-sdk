@@ -50,6 +50,7 @@ interface Payment {
     fiat_currency?: string;
     commodity?: string;
     commodity_amount?: number;
+    settled_amount?: number;
     metadata?: Record<string, any>;
     customer_details?: CustomerDetails;
     status: PaymentStatus;
@@ -88,6 +89,7 @@ interface TransactionData {
     fiat_total_amount: number;
     fiat_currency: string;
     commodity_amount: number;
+    settled_amount?: number;
     commodity: string;
     network: string;
     status: PaymentStatus;
