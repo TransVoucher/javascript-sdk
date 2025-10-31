@@ -35,7 +35,7 @@ const client = TransVoucher.production('your-api-key');
 const payment = await client.payments.create({
     amount: 100.00,
     title: 'Test Payment',  // Required - title of the payment link
-    currency: 'USD',  // Optional - defaults to USD (supported: USD, EUR, NZD, AUD, PLN, KES, TRY, INR)
+    currency: 'USD',  // Optional - defaults to USD (supported: USD, EUR, NZD, AUD, PLN, KES, AED, TRY, INR)
     description: 'Test payment',  // Optional
     multiple_use: false,  // Optional
     customer_details: {  // Optional
@@ -97,7 +97,7 @@ const payment = await client.payments.create({
     title: 'Product Purchase', // Required - title of the payment link
 
     // Optional fields
-    currency: 'USD', // Optional - defaults to USD (supported: USD, EUR, NZD, AUD, PLN, KES, TRY, INR)
+    currency: 'USD', // Optional - defaults to USD (supported: USD, EUR, NZD, AUD, PLN, KES, AED, TRY, INR)
     description: 'Order payment', // Optional - description of the payment
     multiple_use: false, // Optional - whether the payment link can be used multiple times
     cancel_on_first_fail: false, // Optional - cancel payment link after first failed attempt
