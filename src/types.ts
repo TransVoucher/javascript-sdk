@@ -78,6 +78,7 @@ export interface Payment {
     processed_through?: string;
   };
   payment_details?: Record<string, any>;
+  blockchain_tx_hash?: string | null;
   [key: string]: any; // Allow additional custom properties
 }
 
@@ -118,6 +119,7 @@ export interface TransactionData {
   created_at: string;
   updated_at: string;
   paid_at?: string;
+  blockchain_tx_hash?: string | null;
 }
 
 export interface SalesChannelData {

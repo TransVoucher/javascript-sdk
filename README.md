@@ -212,6 +212,11 @@ if (payment.payment_method) {
     console.log('Card Brand:', payment.payment_method.card_brand);
     console.log('Payment Type:', payment.payment_method.payment_type);
 }
+
+// Access blockchain transaction hash if available
+if (payment.blockchain_tx_hash) {
+    console.log('Blockchain TX Hash:', payment.blockchain_tx_hash);
+}
 ```
 
 #### Get Payment Link Status
@@ -236,6 +241,11 @@ if (paymentLink.fiat_base_amount) {
 if (paymentLink.payment_method) {
     console.log('Card Brand:', paymentLink.payment_method.card_brand);
     console.log('Payment Type:', paymentLink.payment_method.payment_type);
+}
+
+// Access blockchain transaction hash if available
+if (paymentLink.blockchain_tx_hash) {
+    console.log('Blockchain TX Hash:', paymentLink.blockchain_tx_hash);
 }
 ```
 
