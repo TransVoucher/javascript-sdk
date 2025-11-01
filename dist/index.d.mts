@@ -26,7 +26,7 @@ interface CreatePaymentRequest {
     metadata?: Record<string, any>;
     customer_details?: CustomerDetails;
     theme?: 'dark' | 'light';
-    lang?: 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'zh' | 'ja' | 'ko' | 'tr';
+    lang?: 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'zh' | 'ja' | 'ko' | 'tr' | 'ka';
     expires_at?: string;
     custom_fields?: Record<string, any>;
     multiple_use?: boolean;

@@ -111,7 +111,7 @@ const payment = await client.payments.create({
 
     // UI customization (optional)
     theme: 'dark', // Optional - 'dark' or 'light'
-    lang: 'en',    // Optional - the language for the payment page - possible values: en, es, fr, de, it, pt, ru, zh, ja, ko, tr
+    lang: 'en',    // Optional - the language for the payment page - possible values: en, es, fr, de, it, pt, ru, zh, ja, ko, tr, ka
 
     // Customer details (optional)
     customer_details: {
