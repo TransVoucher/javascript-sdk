@@ -1,5 +1,6 @@
 interface TransVoucherConfig {
     apiKey: string;
+    apiSecret: string;
     environment?: 'sandbox' | 'production';
     baseUrl?: string;
     timeout?: number;
@@ -167,6 +168,13 @@ declare class ApiError extends TransVoucherError {
 declare class NetworkError extends TransVoucherError {
     constructor(message: string, originalError?: Error);
 }
+interface Currency {
+    short_code: string;
+    name: string;
+    symbol: string;
+    current_usd_value: string;
+    processed_via_currency_code: string | null;
+}
 
 declare class HttpClient {
     private client;
@@ -206,6 +214,15 @@ declare class PaymentService {
     private isValidDate;
 }
 
+declare class CurrencyService {
+    private httpClient;
+    constructor(httpClient: HttpClient);
+    all(options?: RequestOptions): Promise<Currency[]>;
+    isProcessedViaAnotherCurrency(currency: Currency): boolean;
+    findByCode(shortCode: string, options?: RequestOptions): Promise<Currency | undefined>;
+    isSupported(shortCode: string, options?: RequestOptions): Promise<boolean>;
+}
+
 declare class WebhookUtils {
     static verifySignature(payload: string | Buffer, signature: string, secret: string): boolean;
     static parseEvent(payload: string | Buffer, signature: string, secret: string): WebhookVerificationResult;
@@ -221,6 +238,7 @@ declare class TransVoucher {
     private httpClient;
     private config;
     readonly payments: PaymentService;
+    readonly currencies: CurrencyService;
     readonly webhooks: typeof WebhookUtils;
     constructor(config: TransVoucherConfig);
     getConfig(): Readonly<TransVoucherConfig>;
@@ -231,9 +249,9 @@ declare class TransVoucher {
     isProduction(): boolean;
     isSandbox(): boolean;
     static validateApiKey(apiKey: string): boolean;
-    static sandbox(apiKey: string, options?: Partial<TransVoucherConfig>): TransVoucher;
-    static production(apiKey: string, options?: Partial<TransVoucherConfig>): TransVoucher;
+    static sandbox(apiKey: string, apiSecret: string, options?: Partial<TransVoucherConfig>): TransVoucher;
+    static production(apiKey: string, apiSecret: string, options?: Partial<TransVoucherConfig>): TransVoucher;
     private validateConfig;
 }
 
-export { ApiError, type ApiResponse, AuthenticationError, type CreatePaymentRequest, HttpClient, NetworkError, type PaginationMeta, type Payment, type PaymentList, type PaymentListRequest, PaymentService, type PaymentStatus, type RequestOptions, TransVoucher, type TransVoucherConfig, TransVoucherError, ValidationError, type WebhookEvent, type WebhookEventType, WebhookUtils, type WebhookVerificationResult, TransVoucher as default };
+export { ApiError, type ApiResponse, AuthenticationError, type CreatePaymentRequest, type Currency, CurrencyService, HttpClient, NetworkError, type PaginationMeta, type Payment, type PaymentList, type PaymentListRequest, PaymentService, type PaymentStatus, type RequestOptions, TransVoucher, type TransVoucherConfig, TransVoucherError, ValidationError, type WebhookEvent, type WebhookEventType, WebhookUtils, type WebhookVerificationResult, TransVoucher as default };

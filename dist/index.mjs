@@ -54,7 +54,8 @@ var HttpClient = class {
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "Authorization": `Bearer ${this.config.apiKey}`,
+        "X-API-Key": this.config.apiKey,
+        "X-API-Secret": this.config.apiSecret,
         "User-Agent": "TransVoucher-JavaScript-SDK/1.1.0"
       }
     });
@@ -298,8 +299,8 @@ var PaymentService = class {
     }
     if (!data.currency) {
       errors.currency = ["Currency is required"];
-    } else if (typeof data.currency !== "string" || data.currency.length !== 3) {
-      errors.currency = ["Currency must be a 3-character string (USD, EUR, NZD, AUD, PLN, KES, AED, TRY, INR)"];
+    } else if (typeof data.currency !== "string" || data.currency.trim().length === 0) {
+      errors.currency = ["Currency must be a valid currency code"];
     }
     if (data.title && (typeof data.title !== "string" || data.title.length > 255)) {
       errors.title = ["Title must be a string with maximum 255 characters"];
@@ -358,6 +359,43 @@ var PaymentService = class {
     if (!dateRegex.test(date)) return false;
     const parsedDate = new Date(date);
     return parsedDate instanceof Date && !isNaN(parsedDate.getTime());
+  }
+};
+
+// src/services/currency.ts
+var CurrencyService = class {
+  constructor(httpClient) {
+    this.httpClient = httpClient;
+  }
+  /**
+   * Get all active processing currencies
+   */
+  async all(options) {
+    const response = await this.httpClient.get("/currencies", void 0, options);
+    if (!response.success || !response.data) {
+      throw new ValidationError("Invalid response from currencies endpoint", {});
+    }
+    return response.data;
+  }
+  /**
+   * Check if a currency is processed via another currency
+   */
+  isProcessedViaAnotherCurrency(currency) {
+    return currency.processed_via_currency_code !== null && currency.processed_via_currency_code !== void 0;
+  }
+  /**
+   * Get currency by short code
+   */
+  async findByCode(shortCode, options) {
+    const currencies = await this.all(options);
+    return currencies.find((currency) => currency.short_code.toUpperCase() === shortCode.toUpperCase());
+  }
+  /**
+   * Check if a currency code is supported
+   */
+  async isSupported(shortCode, options) {
+    const currency = await this.findByCode(shortCode, options);
+    return currency !== void 0;
   }
 };
 
@@ -560,6 +598,7 @@ var TransVoucher = class _TransVoucher {
     this.config = { ...config };
     this.httpClient = new HttpClient(this.config);
     this.payments = new PaymentService(this.httpClient);
+    this.currencies = new CurrencyService(this.httpClient);
   }
   /**
    * Get current configuration
@@ -622,9 +661,10 @@ var TransVoucher = class _TransVoucher {
   /**
    * Create a new TransVoucher instance for sandbox
    */
-  static sandbox(apiKey, options) {
+  static sandbox(apiKey, apiSecret, options) {
     return new _TransVoucher({
       apiKey,
+      apiSecret,
       environment: "sandbox",
       ...options
     });
@@ -632,9 +672,10 @@ var TransVoucher = class _TransVoucher {
   /**
    * Create a new TransVoucher instance for production
    */
-  static production(apiKey, options) {
+  static production(apiKey, apiSecret, options) {
     return new _TransVoucher({
       apiKey,
+      apiSecret,
       environment: "production",
       ...options
     });
@@ -647,6 +688,13 @@ var TransVoucher = class _TransVoucher {
       errors.apiKey = ["API key must be a string"];
     } else if (!_TransVoucher.validateApiKey(config.apiKey)) {
       errors.apiKey = ["API key format is invalid"];
+    }
+    if (!config.apiSecret) {
+      errors.apiSecret = ["API secret is required"];
+    } else if (typeof config.apiSecret !== "string") {
+      errors.apiSecret = ["API secret must be a string"];
+    } else if (config.apiSecret.trim().length < 10) {
+      errors.apiSecret = ["API secret format is invalid"];
     }
     if (config.environment && !["sandbox", "production"].includes(config.environment)) {
       errors.environment = ['Environment must be either "sandbox" or "production"'];
@@ -674,6 +722,7 @@ var index_default = TransVoucher;
 export {
   ApiError,
   AuthenticationError,
+  CurrencyService,
   HttpClient,
   NetworkError,
   PaymentService,

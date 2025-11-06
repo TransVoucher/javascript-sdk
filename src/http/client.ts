@@ -21,14 +21,15 @@ export class HttpClient {
 
   private createAxiosInstance(): AxiosInstance {
     const baseURL = this.config.baseUrl || this.getDefaultBaseUrl();
-    
+
     const instance = axios.create({
       baseURL,
       timeout: this.config.timeout || 30000,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
+        'X-API-Key': this.config.apiKey,
+        'X-API-Secret': this.config.apiSecret,
         'User-Agent': 'TransVoucher-JavaScript-SDK/1.1.0'
       }
     });

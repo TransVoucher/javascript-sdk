@@ -6,6 +6,7 @@ describe('TransVoucher', () => {
     it('should create instance with valid config', () => {
       const client = new TransVoucher({
         apiKey: 'test-api-key-123456789',
+        apiSecret: 'test-secret-1234567890',
         environment: 'sandbox'
       });
 
@@ -17,7 +18,8 @@ describe('TransVoucher', () => {
     it('should throw ValidationError with invalid API key', () => {
       expect(() => {
         new TransVoucher({
-          apiKey: 'short'
+          apiKey: 'short',
+          apiSecret: 'test-secret-1234567890'
         });
       }).toThrow(ValidationError);
     });
@@ -26,6 +28,7 @@ describe('TransVoucher', () => {
       expect(() => {
         new TransVoucher({
           apiKey: 'test-api-key-123456789',
+          apiSecret: 'test-secret-1234567890',
           environment: 'invalid' as any
         });
       }).toThrow(ValidationError);
@@ -34,13 +37,13 @@ describe('TransVoucher', () => {
 
   describe('static factory methods', () => {
     it('should create sandbox instance', () => {
-      const client = TransVoucher.sandbox('test-api-key-123456789');
+      const client = TransVoucher.sandbox('test-api-key-123456789', 'test-secret-1234567890');
       expect(client.getEnvironment()).toBe('sandbox');
       expect(client.isSandbox()).toBe(true);
     });
 
     it('should create production instance', () => {
-      const client = TransVoucher.production('test-api-key-123456789');
+      const client = TransVoucher.production('test-api-key-123456789', 'test-secret-1234567890');
       expect(client.getEnvironment()).toBe('production');
       expect(client.isProduction()).toBe(true);
     });
@@ -48,7 +51,7 @@ describe('TransVoucher', () => {
 
   describe('environment switching', () => {
     it('should switch from sandbox to production', () => {
-      const client = TransVoucher.sandbox('test-api-key-123456789');
+      const client = TransVoucher.sandbox('test-api-key-123456789', 'test-secret-1234567890');
       expect(client.isSandbox()).toBe(true);
 
       client.switchEnvironment('production');
@@ -79,6 +82,7 @@ describe('TransVoucher', () => {
     it('should return readonly config', () => {
       const client = new TransVoucher({
         apiKey: 'test-api-key-123456789',
+        apiSecret: 'test-secret-1234567890',
         environment: 'sandbox',
         timeout: 5000
       });
@@ -90,11 +94,11 @@ describe('TransVoucher', () => {
     });
 
     it('should update configuration', () => {
-      const client = TransVoucher.sandbox('test-api-key-123456789');
-      
-      client.updateConfig({ 
+      const client = TransVoucher.sandbox('test-api-key-123456789', 'test-secret-1234567890');
+
+      client.updateConfig({
         environment: 'production',
-        timeout: 10000 
+        timeout: 10000
       });
 
       expect(client.isProduction()).toBe(true);
@@ -106,7 +110,7 @@ describe('TransVoucher', () => {
     let client: TransVoucher;
 
     beforeEach(() => {
-      client = TransVoucher.sandbox('test-api-key-123456789');
+      client = TransVoucher.sandbox('test-api-key-123456789', 'test-secret-1234567890');
     });
 
     it('should provide access to payments service', () => {
@@ -143,7 +147,7 @@ describe('TransVoucher', () => {
     let client: TransVoucher;
 
     beforeEach(() => {
-      client = TransVoucher.sandbox('test-api-key-123456789');
+      client = TransVoucher.sandbox('test-api-key-123456789', 'test-secret-1234567890');
     });
 
     it('should validate required fields', async () => {

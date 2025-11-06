@@ -26,16 +26,16 @@ yarn add @transvoucher/sdk
 import TransVoucher from '@transvoucher/sdk';
 
 // Initialize for sandbox
-const client = TransVoucher.sandbox('your-api-key');
+const client = TransVoucher.sandbox('your-api-key', 'your-api-secret');
 
 // Or for production
-const client = TransVoucher.production('your-api-key');
+const client = TransVoucher.production('your-api-key', 'your-api-secret');
 
 // Create a payment
 const payment = await client.payments.create({
     amount: 100.00,
     title: 'Test Payment',  // Required - title of the payment link
-    currency: 'USD',  // Optional - defaults to USD (supported: USD, EUR, NZD, AUD, PLN, KES, AED, TRY, INR)
+    currency: 'USD',  // Optional - defaults to USD (see available currencies via client.currencies.all())
     description: 'Test payment',  // Optional
     multiple_use: false,  // Optional
     customer_details: {  // Optional
@@ -73,7 +73,7 @@ const client = new TransVoucher({
 
 ```typescript
 // Start with sandbox
-const client = TransVoucher.sandbox('your-api-key');
+const client = TransVoucher.sandbox('your-api-key', 'your-api-secret');
 
 // Switch to production
 client.switchEnvironment('production');
@@ -97,7 +97,7 @@ const payment = await client.payments.create({
     title: 'Product Purchase', // Required - title of the payment link
 
     // Optional fields
-    currency: 'USD', // Optional - defaults to USD (supported: USD, EUR, NZD, AUD, PLN, KES, AED, TRY, INR)
+    currency: 'USD', // Optional - defaults to USD (see available currencies via client.currencies.all())
     description: 'Order payment', // Optional - description of the payment
     multiple_use: false, // Optional - whether the payment link can be used multiple times
     cancel_on_first_fail: false, // Optional - cancel payment link after first failed attempt
@@ -287,6 +287,45 @@ if (payment) {
     console.log('Metadata:', payment.metadata);
 }
 ```
+
+#### Get Available Currencies
+
+```typescript
+// Get all supported currencies
+const currencies = await client.currencies.all();
+
+currencies.forEach(currency => {
+    console.log(`${currency.short_code}: ${currency.name} (${currency.symbol})`);
+    console.log(`USD Value: ${currency.current_usd_value}`);
+
+    if (client.currencies.isProcessedViaAnotherCurrency(currency)) {
+        console.log(`Processed via: ${currency.processed_via_currency_code}`);
+    }
+});
+
+// Find a specific currency by code
+const usd = await client.currencies.findByCode('USD');
+if (usd) {
+    console.log('Found:', usd.name);
+}
+
+// Check if a currency is supported
+const isSupported = await client.currencies.isSupported('EUR');
+console.log('EUR is supported:', isSupported);
+```
+
+**Currency Object:**
+- `short_code`: Currency code (e.g., 'USD', 'EUR', 'GBP')
+- `name`: Currency full name (e.g., 'US Dollar')
+- `symbol`: Currency symbol (e.g., '$', '€', '£')
+- `current_usd_value`: Current USD exchange rate value
+- `processed_via_currency_code`: Currency code this currency is processed via (null if processed directly)
+
+**CurrencyService Methods:**
+- `all()`: Get all active currencies
+- `findByCode(shortCode)`: Find currency by code (case-insensitive)
+- `isSupported(shortCode)`: Check if currency is supported
+- `isProcessedViaAnotherCurrency(currency)`: Check if currency is processed via another currency
 
 ### Webhooks
 

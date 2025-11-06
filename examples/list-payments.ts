@@ -10,7 +10,7 @@ import TransVoucher from '../src/index';
 async function listPaymentsExample() {
   try {
     // Initialize the client
-    const client = TransVoucher.sandbox('your-api-key-here');
+    const client = TransVoucher.sandbox('your-api-key-here', 'your-api-secret-here');
     
     console.log('📋 Listing payments...\n');
 

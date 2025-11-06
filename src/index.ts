@@ -1,6 +1,7 @@
 // Main SDK classes
 export { TransVoucher } from './transvoucher';
 export { PaymentService } from './services/payment';
+export { CurrencyService } from './services/currency';
 export { WebhookUtils } from './utils/webhook';
 export { HttpClient } from './http/client';
 
@@ -14,6 +15,7 @@ export type {
   PaymentStatus,
   PaymentListRequest,
   PaymentList,
+  Currency,
   WebhookEvent,
   WebhookEventType,
   WebhookVerificationResult,

@@ -1,9 +1,10 @@
 import { HttpClient } from './http/client';
 import { PaymentService } from './services/payment';
+import { CurrencyService } from './services/currency';
 import { WebhookUtils } from './utils/webhook';
-import { 
-  TransVoucherConfig, 
-  ValidationError 
+import {
+  TransVoucherConfig,
+  ValidationError
 } from './types';
 
 export class TransVoucher {
@@ -11,6 +12,7 @@ export class TransVoucher {
   private config: TransVoucherConfig;
 
   public readonly payments: PaymentService;
+  public readonly currencies: CurrencyService;
   public readonly webhooks = WebhookUtils;
 
   constructor(config: TransVoucherConfig) {
@@ -18,6 +20,7 @@ export class TransVoucher {
     this.config = { ...config };
     this.httpClient = new HttpClient(this.config);
     this.payments = new PaymentService(this.httpClient);
+    this.currencies = new CurrencyService(this.httpClient);
   }
 
   /**
@@ -95,9 +98,10 @@ export class TransVoucher {
   /**
    * Create a new TransVoucher instance for sandbox
    */
-  static sandbox(apiKey: string, options?: Partial<TransVoucherConfig>): TransVoucher {
+  static sandbox(apiKey: string, apiSecret: string, options?: Partial<TransVoucherConfig>): TransVoucher {
     return new TransVoucher({
       apiKey,
+      apiSecret,
       environment: 'sandbox',
       ...options
     });
@@ -106,9 +110,10 @@ export class TransVoucher {
   /**
    * Create a new TransVoucher instance for production
    */
-  static production(apiKey: string, options?: Partial<TransVoucherConfig>): TransVoucher {
+  static production(apiKey: string, apiSecret: string, options?: Partial<TransVoucherConfig>): TransVoucher {
     return new TransVoucher({
       apiKey,
+      apiSecret,
       environment: 'production',
       ...options
     });
@@ -124,6 +129,15 @@ export class TransVoucher {
       errors.apiKey = ['API key must be a string'];
     } else if (!TransVoucher.validateApiKey(config.apiKey)) {
       errors.apiKey = ['API key format is invalid'];
+    }
+
+    // Validate API secret
+    if (!config.apiSecret) {
+      errors.apiSecret = ['API secret is required'];
+    } else if (typeof config.apiSecret !== 'string') {
+      errors.apiSecret = ['API secret must be a string'];
+    } else if (config.apiSecret.trim().length < 10) {
+      errors.apiSecret = ['API secret format is invalid'];
     }
 
     // Validate environment

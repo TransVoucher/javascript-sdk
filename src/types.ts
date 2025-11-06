@@ -4,6 +4,7 @@
 
 export interface TransVoucherConfig {
   apiKey: string;
+  apiSecret: string;
   environment?: 'sandbox' | 'production';
   baseUrl?: string;
   timeout?: number;
@@ -244,4 +245,15 @@ export class NetworkError extends TransVoucherError {
       this.stack = originalError.stack;
     }
   }
+}
+
+/**
+ * Currency object returned by the API
+ */
+export interface Currency {
+  short_code: string;
+  name: string;
+  symbol: string;
+  current_usd_value: string;
+  processed_via_currency_code: string | null;
 } 

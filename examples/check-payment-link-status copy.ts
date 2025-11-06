@@ -9,7 +9,7 @@ import TransVoucher from '../src/index';
 async function checkPaymentLinkStatusExample() {
   try {
     // Initialize the client
-    const client = TransVoucher.sandbox('your-api-key-here');
+    const client = TransVoucher.sandbox('your-api-key-here', 'your-api-secret-here');
     
     // Replace with actual payment link ID
     const paymentLinkId = 'payment-link-uuid-here';

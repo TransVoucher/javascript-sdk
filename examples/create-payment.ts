@@ -9,7 +9,7 @@ import TransVoucher from '../src/index';
 async function createPaymentExample() {
   try {
     // Initialize the client
-    const client = TransVoucher.sandbox('your-api-key-here');
+    const client = TransVoucher.sandbox('your-api-key-here', 'your-api-secret-here');
     
     // Create a payment
     const payment = await client.payments.create({

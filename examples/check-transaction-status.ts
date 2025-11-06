@@ -9,7 +9,7 @@ import TransVoucher from '../src/index';
 async function checkTransactionStatusExample() {
   try {
     // Initialize the client
-    const client = TransVoucher.sandbox('your-api-key-here');
+    const client = TransVoucher.sandbox('your-api-key-here', 'your-api-secret-here');
     
     // Replace with actual transaction ID
     const transactionId = 'transaction-uuid-here';

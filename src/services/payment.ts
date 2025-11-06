@@ -164,8 +164,8 @@ export class PaymentService {
 
     if (!data.currency) {
       errors.currency = ['Currency is required'];
-    } else if (typeof data.currency !== 'string' || data.currency.length !== 3) {
-      errors.currency = ['Currency must be a 3-character string (USD, EUR, NZD, AUD, PLN, KES, AED, TRY, INR)'];
+    } else if (typeof data.currency !== 'string' || data.currency.trim().length === 0) {
+      errors.currency = ['Currency must be a valid currency code'];
     }
 
     // Optional field validations
