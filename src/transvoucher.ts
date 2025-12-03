@@ -1,6 +1,8 @@
 import { HttpClient } from './http/client';
 import { PaymentService } from './services/payment';
 import { CurrencyService } from './services/currency';
+import { NetworkService } from './services/network';
+import { CommodityService } from './services/commodity';
 import { WebhookUtils } from './utils/webhook';
 import {
   TransVoucherConfig,
@@ -13,6 +15,8 @@ export class TransVoucher {
 
   public readonly payments: PaymentService;
   public readonly currencies: CurrencyService;
+  public readonly networks: NetworkService;
+  public readonly commodities: CommodityService;
   public readonly webhooks = WebhookUtils;
 
   constructor(config: TransVoucherConfig) {
@@ -21,6 +25,8 @@ export class TransVoucher {
     this.httpClient = new HttpClient(this.config);
     this.payments = new PaymentService(this.httpClient);
     this.currencies = new CurrencyService(this.httpClient);
+    this.networks = new NetworkService(this.httpClient);
+    this.commodities = new CommodityService(this.httpClient);
   }
 
   /**

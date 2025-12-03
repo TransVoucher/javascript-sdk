@@ -57,7 +57,7 @@ export class HttpClient {
   }
 
   private getDefaultBaseUrl(): string {
-    const subdomain = this.config.environment === 'production' ? 'api' : 'api-sandbox';
+    const subdomain = this.config.environment === 'production' ? 'api' : 'sandbox-api';
     return `https://${subdomain}.transvoucher.com/v1.0`;
   }
 

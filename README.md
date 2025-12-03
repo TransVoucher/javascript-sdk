@@ -53,6 +53,13 @@ const payment = await client.payments.create({
 console.log('Payment created:', payment.id);
 console.log('Reference ID:', payment.reference_id);
 console.log('Payment URL:', payment.payment_url);
+
+// For iframe embedding (fullscreen with transparent background):
+// const iframe = document.createElement('iframe');
+// iframe.src = payment.embed_url;
+// iframe.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none; z-index: 9999;';
+// iframe.allowpaymentrequest = true;
+// document.body.appendChild(iframe);
 ```
 
 ## Configuration
@@ -588,7 +595,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## Support
 
-- **API Documentation**: [https://transvoucher.com/api-documentation](https://transvoucher.com/api-documentation)
+- **API Documentation**: [https://transvoucher.com/api-documentation](https://transvoucher.com/api-documentation) (also available as [OpenAPI spec](https://docs.transvoucher.com/))
 - **Service Availability
   **: [https://transvoucher.com/api-documentation/service-availability](https://transvoucher.com/api-documentation/service-availability)
 - **Email**: developers@transvoucher.com

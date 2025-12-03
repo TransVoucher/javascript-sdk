@@ -56,6 +56,7 @@ export interface Payment {
   transaction_id?: string;
   payment_link_id?: string;
   payment_url?: string;
+  embed_url?: string;
   title?: string;
   description?: string;
   amount: number;
@@ -256,4 +257,38 @@ export interface Currency {
   symbol: string;
   current_usd_value: string;
   processed_via_currency_code: string | null;
-} 
+}
+
+/**
+ * Network object returned by the API (blockchain network)
+ */
+export interface Network {
+  short_code: string;
+  identifier: string;
+  name: string;
+  token_standard: string | null;
+  chain_id: number | null;
+  explorer_url: string | null;
+  icon_url: string | null;
+  is_testnet: boolean;
+}
+
+/**
+ * Commodity object returned by the API (cryptocurrency)
+ */
+export interface Commodity {
+  short_code: string;
+  name: string;
+  icon_url: string | null;
+  current_usd_value: string;
+  contract_address: string | null;
+  decimals: number;
+  network_short_code: string;
+}
+
+/**
+ * Conversion rate response
+ */
+export interface ConversionRate {
+  rate: string;
+}

@@ -32,9 +32,11 @@ var index_exports = {};
 __export(index_exports, {
   ApiError: () => ApiError,
   AuthenticationError: () => AuthenticationError,
+  CommodityService: () => CommodityService,
   CurrencyService: () => CurrencyService,
   HttpClient: () => HttpClient,
   NetworkError: () => NetworkError,
+  NetworkService: () => NetworkService,
   PaymentService: () => PaymentService,
   TransVoucher: () => TransVoucher,
   TransVoucherError: () => TransVoucherError,
@@ -122,7 +124,7 @@ var HttpClient = class {
     return instance;
   }
   getDefaultBaseUrl() {
-    const subdomain = this.config.environment === "production" ? "api" : "api-sandbox";
+    const subdomain = this.config.environment === "production" ? "api" : "sandbox-api";
     return `https://${subdomain}.transvoucher.com/v1.0`;
   }
   handleError(error) {
@@ -406,6 +408,37 @@ var PaymentService = class {
     const parsedDate = new Date(date);
     return parsedDate instanceof Date && !isNaN(parsedDate.getTime());
   }
+  /**
+   * Get conversion rate for a network, commodity, and fiat currency
+   *
+   * @param network Network short code (e.g., 'POL', 'ETH', 'BSC')
+   * @param commodity Commodity short code (e.g., 'USDT', 'USDC')
+   * @param fiatCurrency Fiat currency short code (e.g., 'USD', 'EUR')
+   * @param paymentMethod Payment method (default: 'card')
+   */
+  async getConversionRate(network, commodity, fiatCurrency, paymentMethod = "card", options) {
+    if (!network || typeof network !== "string") {
+      throw new ValidationError("Network is required", {
+        network: ["Network short code is required"]
+      });
+    }
+    if (!commodity || typeof commodity !== "string") {
+      throw new ValidationError("Commodity is required", {
+        commodity: ["Commodity short code is required"]
+      });
+    }
+    if (!fiatCurrency || typeof fiatCurrency !== "string") {
+      throw new ValidationError("Fiat currency is required", {
+        fiatCurrency: ["Fiat currency short code is required"]
+      });
+    }
+    const endpoint = `/conversion-rate/${network}/${commodity}/${fiatCurrency}/${paymentMethod}`;
+    const response = await this.httpClient.get(endpoint, void 0, options);
+    if (!response.success || !response.data) {
+      throw new ValidationError("Invalid response from conversion rate endpoint", {});
+    }
+    return response.data;
+  }
 };
 
 // src/services/currency.ts
@@ -442,6 +475,117 @@ var CurrencyService = class {
   async isSupported(shortCode, options) {
     const currency = await this.findByCode(shortCode, options);
     return currency !== void 0;
+  }
+};
+
+// src/services/network.ts
+var NetworkService = class {
+  constructor(httpClient) {
+    this.httpClient = httpClient;
+  }
+  /**
+   * Get all active settlement networks
+   */
+  async all(options) {
+    const response = await this.httpClient.get("/networks", void 0, options);
+    if (!response.success || !response.data) {
+      throw new ValidationError("Invalid response from networks endpoint", {});
+    }
+    return response.data;
+  }
+  /**
+   * Check if this is a testnet
+   */
+  isTestnet(network) {
+    return network.is_testnet === true;
+  }
+  /**
+   * Get network by short code
+   */
+  async findByCode(shortCode, options) {
+    const networks = await this.all(options);
+    return networks.find((network) => network.short_code.toUpperCase() === shortCode.toUpperCase());
+  }
+  /**
+   * Check if a network code is supported
+   */
+  async isSupported(shortCode, options) {
+    const network = await this.findByCode(shortCode, options);
+    return network !== void 0;
+  }
+  /**
+   * Get all mainnet networks (excluding testnets)
+   */
+  async getMainnets(options) {
+    const networks = await this.all(options);
+    return networks.filter((network) => !network.is_testnet);
+  }
+  /**
+   * Get all testnet networks
+   */
+  async getTestnets(options) {
+    const networks = await this.all(options);
+    return networks.filter((network) => network.is_testnet);
+  }
+};
+
+// src/services/commodity.ts
+var CommodityService = class {
+  constructor(httpClient) {
+    this.httpClient = httpClient;
+  }
+  /**
+   * Get all active settlement commodities
+   */
+  async all(options) {
+    const response = await this.httpClient.get("/commodities", void 0, options);
+    if (!response.success || !response.data) {
+      throw new ValidationError("Invalid response from commodities endpoint", {});
+    }
+    return response.data;
+  }
+  /**
+   * Check if this is a native token (no contract address)
+   */
+  isNativeToken(commodity) {
+    return !commodity.contract_address || commodity.contract_address.trim() === "";
+  }
+  /**
+   * Get commodity by short code
+   */
+  async findByCode(shortCode, options) {
+    const commodities = await this.all(options);
+    return commodities.find((commodity) => commodity.short_code.toUpperCase() === shortCode.toUpperCase());
+  }
+  /**
+   * Check if a commodity code is supported
+   */
+  async isSupported(shortCode, options) {
+    const commodity = await this.findByCode(shortCode, options);
+    return commodity !== void 0;
+  }
+  /**
+   * Get all commodities for a specific network
+   */
+  async getByNetwork(networkShortCode, options) {
+    const commodities = await this.all(options);
+    return commodities.filter(
+      (commodity) => commodity.network_short_code.toUpperCase() === networkShortCode.toUpperCase()
+    );
+  }
+  /**
+   * Get all native tokens (currencies without contract addresses)
+   */
+  async getNativeTokens(options) {
+    const commodities = await this.all(options);
+    return commodities.filter((commodity) => this.isNativeToken(commodity));
+  }
+  /**
+   * Get all ERC-20/BEP-20 tokens (currencies with contract addresses)
+   */
+  async getContractTokens(options) {
+    const commodities = await this.all(options);
+    return commodities.filter((commodity) => !this.isNativeToken(commodity));
   }
 };
 
@@ -645,6 +789,8 @@ var TransVoucher = class _TransVoucher {
     this.httpClient = new HttpClient(this.config);
     this.payments = new PaymentService(this.httpClient);
     this.currencies = new CurrencyService(this.httpClient);
+    this.networks = new NetworkService(this.httpClient);
+    this.commodities = new CommodityService(this.httpClient);
   }
   /**
    * Get current configuration
@@ -769,9 +915,11 @@ var index_default = TransVoucher;
 0 && (module.exports = {
   ApiError,
   AuthenticationError,
+  CommodityService,
   CurrencyService,
   HttpClient,
   NetworkError,
+  NetworkService,
   PaymentService,
   TransVoucher,
   TransVoucherError,

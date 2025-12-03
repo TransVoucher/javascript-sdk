@@ -42,6 +42,7 @@ interface Payment {
     transaction_id?: string;
     payment_link_id?: string;
     payment_url?: string;
+    embed_url?: string;
     title?: string;
     description?: string;
     amount: number;
@@ -175,6 +176,28 @@ interface Currency {
     current_usd_value: string;
     processed_via_currency_code: string | null;
 }
+interface Network {
+    short_code: string;
+    identifier: string;
+    name: string;
+    token_standard: string | null;
+    chain_id: number | null;
+    explorer_url: string | null;
+    icon_url: string | null;
+    is_testnet: boolean;
+}
+interface Commodity {
+    short_code: string;
+    name: string;
+    icon_url: string | null;
+    current_usd_value: string;
+    contract_address: string | null;
+    decimals: number;
+    network_short_code: string;
+}
+interface ConversionRate {
+    rate: string;
+}
 
 declare class HttpClient {
     private client;
@@ -212,6 +235,7 @@ declare class PaymentService {
     private isValidEmail;
     private isValidUrl;
     private isValidDate;
+    getConversionRate(network: string, commodity: string, fiatCurrency: string, paymentMethod?: string, options?: RequestOptions): Promise<ConversionRate>;
 }
 
 declare class CurrencyService {
@@ -221,6 +245,29 @@ declare class CurrencyService {
     isProcessedViaAnotherCurrency(currency: Currency): boolean;
     findByCode(shortCode: string, options?: RequestOptions): Promise<Currency | undefined>;
     isSupported(shortCode: string, options?: RequestOptions): Promise<boolean>;
+}
+
+declare class NetworkService {
+    private httpClient;
+    constructor(httpClient: HttpClient);
+    all(options?: RequestOptions): Promise<Network[]>;
+    isTestnet(network: Network): boolean;
+    findByCode(shortCode: string, options?: RequestOptions): Promise<Network | undefined>;
+    isSupported(shortCode: string, options?: RequestOptions): Promise<boolean>;
+    getMainnets(options?: RequestOptions): Promise<Network[]>;
+    getTestnets(options?: RequestOptions): Promise<Network[]>;
+}
+
+declare class CommodityService {
+    private httpClient;
+    constructor(httpClient: HttpClient);
+    all(options?: RequestOptions): Promise<Commodity[]>;
+    isNativeToken(commodity: Commodity): boolean;
+    findByCode(shortCode: string, options?: RequestOptions): Promise<Commodity | undefined>;
+    isSupported(shortCode: string, options?: RequestOptions): Promise<boolean>;
+    getByNetwork(networkShortCode: string, options?: RequestOptions): Promise<Commodity[]>;
+    getNativeTokens(options?: RequestOptions): Promise<Commodity[]>;
+    getContractTokens(options?: RequestOptions): Promise<Commodity[]>;
 }
 
 declare class WebhookUtils {
@@ -239,6 +286,8 @@ declare class TransVoucher {
     private config;
     readonly payments: PaymentService;
     readonly currencies: CurrencyService;
+    readonly networks: NetworkService;
+    readonly commodities: CommodityService;
     readonly webhooks: typeof WebhookUtils;
     constructor(config: TransVoucherConfig);
     getConfig(): Readonly<TransVoucherConfig>;
@@ -254,4 +303,4 @@ declare class TransVoucher {
     private validateConfig;
 }
 
-export { ApiError, type ApiResponse, AuthenticationError, type CreatePaymentRequest, type Currency, CurrencyService, HttpClient, NetworkError, type PaginationMeta, type Payment, type PaymentList, type PaymentListRequest, PaymentService, type PaymentStatus, type RequestOptions, TransVoucher, type TransVoucherConfig, TransVoucherError, ValidationError, type WebhookEvent, type WebhookEventType, WebhookUtils, type WebhookVerificationResult, TransVoucher as default };
+export { ApiError, type ApiResponse, AuthenticationError, type Commodity, CommodityService, type ConversionRate, type CreatePaymentRequest, type Currency, CurrencyService, HttpClient, type Network, NetworkError, NetworkService, type PaginationMeta, type Payment, type PaymentList, type PaymentListRequest, PaymentService, type PaymentStatus, type RequestOptions, TransVoucher, type TransVoucherConfig, TransVoucherError, ValidationError, type WebhookEvent, type WebhookEventType, WebhookUtils, type WebhookVerificationResult, TransVoucher as default };

@@ -4,6 +4,7 @@ import {
   Payment,
   PaymentListRequest,
   PaymentList,
+  ConversionRate,
   ApiResponse,
   ValidationError,
   RequestOptions
@@ -239,8 +240,51 @@ export class PaymentService {
   private isValidDate(date: string): boolean {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(date)) return false;
-    
+
     const parsedDate = new Date(date);
     return parsedDate instanceof Date && !isNaN(parsedDate.getTime());
   }
-} 
+
+  /**
+   * Get conversion rate for a network, commodity, and fiat currency
+   *
+   * @param network Network short code (e.g., 'POL', 'ETH', 'BSC')
+   * @param commodity Commodity short code (e.g., 'USDT', 'USDC')
+   * @param fiatCurrency Fiat currency short code (e.g., 'USD', 'EUR')
+   * @param paymentMethod Payment method (default: 'card')
+   */
+  async getConversionRate(
+    network: string,
+    commodity: string,
+    fiatCurrency: string,
+    paymentMethod: string = 'card',
+    options?: RequestOptions
+  ): Promise<ConversionRate> {
+    if (!network || typeof network !== 'string') {
+      throw new ValidationError('Network is required', {
+        network: ['Network short code is required']
+      });
+    }
+
+    if (!commodity || typeof commodity !== 'string') {
+      throw new ValidationError('Commodity is required', {
+        commodity: ['Commodity short code is required']
+      });
+    }
+
+    if (!fiatCurrency || typeof fiatCurrency !== 'string') {
+      throw new ValidationError('Fiat currency is required', {
+        fiatCurrency: ['Fiat currency short code is required']
+      });
+    }
+
+    const endpoint = `/conversion-rate/${network}/${commodity}/${fiatCurrency}/${paymentMethod}`;
+    const response = await this.httpClient.get<ConversionRate>(endpoint, undefined, options);
+
+    if (!response.success || !response.data) {
+      throw new ValidationError('Invalid response from conversion rate endpoint', {});
+    }
+
+    return response.data;
+  }
+}

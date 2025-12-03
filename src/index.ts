@@ -2,6 +2,8 @@
 export { TransVoucher } from './transvoucher';
 export { PaymentService } from './services/payment';
 export { CurrencyService } from './services/currency';
+export { NetworkService } from './services/network';
+export { CommodityService } from './services/commodity';
 export { WebhookUtils } from './utils/webhook';
 export { HttpClient } from './http/client';
 
@@ -16,6 +18,9 @@ export type {
   PaymentListRequest,
   PaymentList,
   Currency,
+  Network,
+  Commodity,
+  ConversionRate,
   WebhookEvent,
   WebhookEventType,
   WebhookVerificationResult,
