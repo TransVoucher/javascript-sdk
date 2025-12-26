@@ -411,6 +411,10 @@ const handler = WebhookUtils.createHandler('your-api-secret', {
         const transaction = event.data.transaction;
         console.log('Payment expired:', transaction.id);
         // Handle expired payment - update order status, etc.
+    },
+    'system.health_check': async (event) => {
+        console.log('Health check received:', event.data.message);
+        // Optional: Log health check
     }
 });
 
@@ -588,6 +592,7 @@ app.post('/webhook', async (req, res) => {
 - `payment_intent.failed` - Payment intent failed
 - `payment_intent.cancelled` - Payment intent was cancelled
 - `payment_intent.expired` - Payment intent expired
+- `system.health_check` - Health check event triggered from dashboard
 
 ## Contributing
 
@@ -599,7 +604,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - **Service Availability
   **: [https://transvoucher.com/api-documentation/service-availability](https://transvoucher.com/api-documentation/service-availability)
 - **Email**: developers@transvoucher.com
-- **Telegram**: @{{ $brand_telegram_contact }}
+- **Telegram**: @TransVoucher_Support_Bot
 
 ## License
 

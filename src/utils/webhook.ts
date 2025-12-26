@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import { WebhookEvent, WebhookVerificationResult, TransVoucherError } from '../types';
+import { WebhookEvent, WebhookVerificationResult, TransVoucherError, WebhookEventType, PaymentWebhookEvent, HealthCheckWebhookEvent } from '../types';
 
 export class WebhookUtils {
   /**
@@ -70,14 +70,14 @@ export class WebhookUtils {
    * Secure string comparison to prevent timing attacks
    */
   private static secureCompare(a: string, b: string): boolean {
-      const bufA = Buffer.from(a);
-      const bufB = Buffer.from(b);
+    const bufA = Buffer.from(a);
+    const bufB = Buffer.from(b);
 
-      if (bufA.length !== bufB.length) {
-          return false;
-      }
+    if (bufA.length !== bufB.length) {
+      return false;
+    }
 
-      return crypto.timingSafeEqual(bufA, bufB);
+    return crypto.timingSafeEqual(bufA, bufB);
   }
 
   /**
@@ -105,7 +105,8 @@ export class WebhookUtils {
       'payment_intent.succeeded',
       'payment_intent.failed',
       'payment_intent.cancelled',
-      'payment_intent.expired'
+      'payment_intent.expired',
+      'system.health_check'
     ];
 
     if (!validEventTypes.includes(eventData.event)) {  // Fix: use event instead of type
@@ -136,7 +137,24 @@ export class WebhookUtils {
       };
     }
 
-    // Validate transaction structure
+    if (eventData.event === 'system.health_check') {
+      const data = eventData.data;
+      if (!data.message || typeof data.message !== 'string') {
+        return {
+          isValid: false,
+          error: 'Health check must have a message'
+        };
+      }
+      if (!data.sales_channel_id || typeof data.sales_channel_id !== 'number') {
+        return {
+          isValid: false,
+          error: 'Health check must have a sales_channel_id'
+        };
+      }
+      return { isValid: true };
+    }
+
+    // Validate transaction structure for payment events
     const transaction = eventData.data.transaction;
     if (!transaction || typeof transaction !== 'object') {
       return {
@@ -153,7 +171,7 @@ export class WebhookUtils {
       };
     }
 
-    if (typeof transaction.commodity_amount !== 'number' || transaction.commodity_amount <= 0) {
+    if (typeof transaction.commodity_amount !== 'number' || transaction.commodity_amount < 0) {
       return {
         isValid: false,
         error: 'Transaction must have a valid commodity_amount'
@@ -209,13 +227,13 @@ export class WebhookUtils {
     toleranceInSeconds: number = 300
   ): boolean {
     try {
-      const eventTime = typeof timestamp === 'string' 
-        ? new Date(timestamp).getTime() 
+      const eventTime = typeof timestamp === 'string'
+        ? new Date(timestamp).getTime()
         : timestamp * 1000;
-      
+
       const currentTime = Date.now();
       const timeDifference = Math.abs(currentTime - eventTime) / 1000;
-      
+
       return timeDifference <= toleranceInSeconds;
     } catch {
       return false;
@@ -227,18 +245,24 @@ export class WebhookUtils {
    */
   static createHandler(
     secret: string,
-    handlers: Partial<Record<string, (event: WebhookEvent) => void | Promise<void>>>
+    handlers: {
+      [K in WebhookEventType]?: (
+        event: K extends 'system.health_check' ? HealthCheckWebhookEvent : PaymentWebhookEvent
+      ) => void | Promise<void>
+    }
   ) {
     return async (payload: string | Buffer, signature: string): Promise<void> => {
       const result = this.parseEvent(payload, signature, secret);
-      
+
       if (!result.isValid || !result.event) {
         throw new TransVoucherError(result.error || 'Invalid webhook event');
       }
 
-      const handler = handlers[result.event.event];  // Fix: use event property instead of type
+      const eventType = result.event.event;
+      // @ts-ignore
+      const handler = handlers[eventType];
       if (handler) {
-        await handler(result.event);
+        await handler(result.event as any);
       }
     };
   }

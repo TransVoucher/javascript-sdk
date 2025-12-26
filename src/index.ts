@@ -22,7 +22,10 @@ export type {
   Commodity,
   ConversionRate,
   WebhookEvent,
+  PaymentWebhookEvent,
+  HealthCheckWebhookEvent,
   WebhookEventType,
+  PaymentWebhookEventType,
   WebhookVerificationResult,
   RequestOptions
 } from './types';

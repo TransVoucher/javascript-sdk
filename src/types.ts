@@ -85,10 +85,10 @@ export interface Payment {
   [key: string]: any; // Allow additional custom properties
 }
 
-export type PaymentStatus = 
+export type PaymentStatus =
   | 'pending'
   | 'attempting'
-  | 'processing' 
+  | 'processing'
   | 'completed'
   | 'failed'
   | 'expired'
@@ -137,19 +137,34 @@ export interface MerchantData {
   company_name: string;
 }
 
-export interface WebhookEvent {
-  event: WebhookEventType;
+export type WebhookEvent = PaymentWebhookEvent | HealthCheckWebhookEvent;
+
+export interface PaymentWebhookEvent {
+  event: PaymentWebhookEventType;
   timestamp: string;
-  data: {
-    payment_link_id?: string;
-    transaction: TransactionData;
-    sales_channel: SalesChannelData;
-    merchant: MerchantData;
-    payment_details?: Record<string, any>;
-    customer_details?: CustomerDetails;
-    metadata?: Record<string, any>;
-    fail_reason?: string;
-  };
+  data: PaymentWebhookData;
+}
+
+export interface HealthCheckWebhookEvent {
+  event: 'system.health_check';
+  timestamp: string;
+  data: HealthCheckData;
+}
+
+export interface PaymentWebhookData {
+  payment_link_id?: string;
+  transaction: TransactionData;
+  sales_channel: SalesChannelData;
+  merchant: MerchantData;
+  payment_details?: Record<string, any>;
+  customer_details?: CustomerDetails;
+  metadata?: Record<string, any>;
+  fail_reason?: string;
+}
+
+export interface HealthCheckData {
+  message: string;
+  sales_channel_id: number;
 }
 
 export interface CustomerDetails {
@@ -170,7 +185,9 @@ export interface CustomerDetails {
   card_street?: string;
 }
 
-export type WebhookEventType = 
+export type WebhookEventType = PaymentWebhookEventType | 'system.health_check';
+
+export type PaymentWebhookEventType =
   | 'payment_intent.created'
   | 'payment_intent.attempting'
   | 'payment_intent.processing'

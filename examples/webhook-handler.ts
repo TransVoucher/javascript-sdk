@@ -6,7 +6,7 @@
  */
 
 import express from 'express';
-import { WebhookUtils, WebhookEvent } from '../src/index';
+import { WebhookUtils, WebhookEvent, PaymentWebhookEvent } from '../src/index';
 
 // Your webhook secret from TransVoucher dashboard
 const WEBHOOK_SECRET = process.env.TRANSVOUCHER_WEBHOOK_SECRET || 'your-webhook-secret-here';
@@ -38,7 +38,7 @@ app.post('/webhook', async (req, res) => {
     if (!result.isValid || !result.event) {
       console.error('❌ Invalid webhook signature or payload');
       console.error('Error:', result.error);
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Invalid webhook signature or payload',
         details: result.error
       });
@@ -53,7 +53,7 @@ app.post('/webhook', async (req, res) => {
     await handleWebhookEvent(event);
 
     // Always respond with 200 to acknowledge receipt
-    res.status(200).json({ 
+    res.status(200).json({
       received: true,
       event_id: event.id,
       event_type: event.type
@@ -61,10 +61,10 @@ app.post('/webhook', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Webhook processing error:', error);
-    
+
     // Return 500 to indicate processing failure
     // TransVoucher will retry the webhook
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
@@ -74,16 +74,33 @@ app.post('/webhook', async (req, res) => {
 /**
  * Handle different webhook event types
  */
+/**
+ * Handle different webhook event types
+ */
 async function handleWebhookEvent(event: WebhookEvent): Promise<void> {
+  console.log('\n🔄 Processing webhook event:', event.event);
+
+  if (event.event === 'system.health_check') {
+    const data = event.data;
+    console.log('💚 Health check received');
+    console.log('Message:', data.message);
+    console.log('Sales Channel ID:', data.sales_channel_id);
+    return;
+  }
+
+  // At this point, TypeScript knows event is PaymentWebhookEvent
   const transaction = event.data.transaction;
-  
-  console.log('\n🔄 Processing webhook event...');
+
   console.log('Transaction ID:', transaction.id);
   console.log('Reference ID:', transaction.reference_id);
-  console.log('Amount:', transaction.amount, transaction.currency);
+  console.log('Amount:', transaction.fiat_total_amount, transaction.fiat_currency);
   console.log('Status:', transaction.status);
-  console.log('Payment Method:', JSON.stringify(transaction.payment_method));
-  
+
+  // Payment methods might be available
+  // if (transaction.payment_method) {
+  //   console.log('Payment Method:', JSON.stringify(transaction.payment_method));
+  // }
+
   if (event.data.customer_details) {
     console.log('Customer Name:', event.data.customer_details.full_name);
     if (event.data.customer_details.email) {
@@ -95,7 +112,7 @@ async function handleWebhookEvent(event: WebhookEvent): Promise<void> {
     case 'payment_intent.created':
       await handlePaymentIntentCreated(event);
       break;
-      
+
     case 'payment_intent.attempting':
       await handlePaymentIntentAttempting(event);
       break;
@@ -103,155 +120,155 @@ async function handleWebhookEvent(event: WebhookEvent): Promise<void> {
     case 'payment_intent.processing':
       await handlePaymentIntentProcessing(event);
       break;
-      
+
     case 'payment_intent.succeeded':
       await handlePaymentIntentSucceeded(event);
       break;
-      
+
     case 'payment_intent.failed':
       await handlePaymentIntentFailed(event);
       break;
-      
+
     case 'payment_intent.cancelled':
       await handlePaymentIntentCancelled(event);
       break;
-      
+
     case 'payment_intent.expired':
       await handlePaymentIntentExpired(event);
       break;
-      
+
     default:
-      console.log('⚠️ Unhandled event type:', event.event);
+      console.log('⚠️ Unhandled event type:', event);
   }
-  
+
   console.log('✅ Event processed successfully\n');
 }
 
 /**
  * Handle payment intent created event
  */
-async function handlePaymentIntentCreated(event: WebhookEvent): Promise<void> {
+async function handlePaymentIntentCreated(event: PaymentWebhookEvent): Promise<void> {
   console.log('🆕 Payment intent created');
-  
+
   const transaction = event.data.transaction;
-  
+
   // Example: Log the payment intent creation
   // await logPaymentIntent(transaction.id, transaction.reference_id);
-  
+
   // Example: Initialize order status
   // await initializeOrder(transaction.reference_id, transaction.amount, transaction.currency);
-  
+
   console.log('📝 Payment intent logged');
 }
 
 /**
  * Handle payment intent created event
  */
-async function handlePaymentIntentAttempting(event: WebhookEvent): Promise<void> {
+async function handlePaymentIntentAttempting(event: PaymentWebhookEvent): Promise<void> {
   console.log('🆕 Payment attempting');
-  
+
   const transaction = event.data.transaction;
-  
+
   // Example: Log the payment intent creation
   // await logPaymentIntent(transaction.id, transaction.reference_id);
-  
+
   // Example: Initialize order status
   // await initializeOrder(transaction.reference_id, transaction.amount, transaction.currency);
-  
+
   console.log('📝 Payment intent logged');
 }
 
 /**
  * Handle payment intent created event
  */
-async function handlePaymentIntentProcessing(event: WebhookEvent): Promise<void> {
+async function handlePaymentIntentProcessing(event: PaymentWebhookEvent): Promise<void> {
   console.log('🆕 Payment attempt was started. Processing...');
-  
+
   const transaction = event.data.transaction;
-  
+
   // Example: Log the payment intent creation
   // await logPaymentIntent(transaction.id, transaction.reference_id);
-  
+
   // Example: Initialize order status
   // await initializeOrder(transaction.reference_id, transaction.amount, transaction.currency);
-  
+
   console.log('📝 Payment intent logged');
 }
 
 /**
  * Handle payment intent succeeded event
  */
-async function handlePaymentIntentSucceeded(event: WebhookEvent): Promise<void> {
+async function handlePaymentIntentSucceeded(event: PaymentWebhookEvent): Promise<void> {
   console.log('🎉 Payment intent succeeded!');
-  
+
   const transaction = event.data.transaction;
-  
+
   // Example: Fulfill the order
   // await fulfillOrder(transaction.reference_id);
-  
+
   // Example: Send receipt email if customer details exist
   // if (event.data.customer_details) {
   //   await sendReceiptEmail(event.data.customer_details, transaction);
   // }
-  
+
   // Example: Process metadata if exists
   // if (event.data.metadata) {
   //   await processMetadata(transaction.id, event.data.metadata);
   // }
-  
+
   console.log('📦 Order fulfilled and receipt sent');
 }
 
 /**
  * Handle payment intent failed event
  */
-async function handlePaymentIntentFailed(event: WebhookEvent): Promise<void> {
+async function handlePaymentIntentFailed(event: PaymentWebhookEvent): Promise<void> {
   console.log('❌ Payment intent failed');
-  
+
   const transaction = event.data.transaction;
-  
+
   // Example: Update order status
   // await updateOrderStatus(transaction.reference_id, 'failed');
-  
+
   // Example: Send failure notification if customer details exist
   // if (event.data.customer_details) {
   //   await sendFailureNotification(event.data.customer_details, transaction);
   // }
-  
+
   console.log('📧 Failure notification sent');
 }
 
 /**
  * Handle payment intent expired event
  */
-async function handlePaymentIntentExpired(event: WebhookEvent): Promise<void> {
+async function handlePaymentIntentExpired(event: PaymentWebhookEvent): Promise<void> {
   console.log('⏰ Payment intent expired');
-  
+
   const transaction = event.data.transaction;
-  
+
   // Example: Clean up pending order
   // await cleanupExpiredOrder(transaction.reference_id);
-  
+
   // Example: Release held inventory
   // await releaseInventory(transaction.reference_id);
-  
+
   console.log('🧹 Expired order cleaned up');
 }
 
 /**
  * Handle payment intent cancelled event
  */
-async function handlePaymentIntentCancelled(event: WebhookEvent): Promise<void> {
+async function handlePaymentIntentCancelled(event: PaymentWebhookEvent): Promise<void> {
   console.log('🚫 Payment intent was cancelled');
-  
+
   const transaction = event.data.transaction;
-  
+
   // Example: Handle cancellation
   // await handleOrderCancellation(transaction.reference_id);
-  
+
   // Example: Release held inventory
   // await releaseInventory(transaction.reference_id);
-  
+
   console.log('📝 Cancellation processed');
 }
 
@@ -279,6 +296,9 @@ const webhookHandler = WebhookUtils.createHandler(WEBHOOK_SECRET, {
   },
   'payment_intent.expired': async (event) => {
     console.log('Handler: Payment intent expired:', event.data.transaction.id);
+  },
+  'system.health_check': async (event) => {
+    console.log('Handler: Health check received:', event.data.message);
   }
 });
 
@@ -298,8 +318,8 @@ app.post('/webhook-alt', async (req, res) => {
  * Health check endpoint
  */
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     service: 'TransVoucher Webhook Handler',
     timestamp: new Date().toISOString()
   });
