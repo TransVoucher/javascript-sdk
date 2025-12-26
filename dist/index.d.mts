@@ -109,19 +109,30 @@ interface MerchantData {
     id: string;
     company_name: string;
 }
-interface WebhookEvent {
-    event: WebhookEventType;
+type WebhookEvent = PaymentWebhookEvent | HealthCheckWebhookEvent;
+interface PaymentWebhookEvent {
+    event: PaymentWebhookEventType;
     timestamp: string;
-    data: {
-        payment_link_id?: string;
-        transaction: TransactionData;
-        sales_channel: SalesChannelData;
-        merchant: MerchantData;
-        payment_details?: Record<string, any>;
-        customer_details?: CustomerDetails;
-        metadata?: Record<string, any>;
-        fail_reason?: string;
-    };
+    data: PaymentWebhookData;
+}
+interface HealthCheckWebhookEvent {
+    event: 'system.health_check';
+    timestamp: string;
+    data: HealthCheckData;
+}
+interface PaymentWebhookData {
+    payment_link_id?: string;
+    transaction: TransactionData;
+    sales_channel: SalesChannelData;
+    merchant: MerchantData;
+    payment_details?: Record<string, any>;
+    customer_details?: CustomerDetails;
+    metadata?: Record<string, any>;
+    fail_reason?: string;
+}
+interface HealthCheckData {
+    message: string;
+    sales_channel_id: number;
 }
 interface CustomerDetails {
     id?: string;
@@ -140,7 +151,8 @@ interface CustomerDetails {
     card_post_code?: string;
     card_street?: string;
 }
-type WebhookEventType = 'payment_intent.created' | 'payment_intent.attempting' | 'payment_intent.processing' | 'payment_intent.succeeded' | 'payment_intent.failed' | 'payment_intent.cancelled' | 'payment_intent.expired';
+type WebhookEventType = PaymentWebhookEventType | 'system.health_check';
+type PaymentWebhookEventType = 'payment_intent.created' | 'payment_intent.attempting' | 'payment_intent.processing' | 'payment_intent.succeeded' | 'payment_intent.failed' | 'payment_intent.cancelled' | 'payment_intent.expired';
 interface WebhookVerificationResult {
     isValid: boolean;
     event?: WebhookEvent;
@@ -278,7 +290,9 @@ declare class WebhookUtils {
     private static validateEventStructure;
     static extractSignature(signatureHeader: string): string;
     static isEventRecent(timestamp: string | number, toleranceInSeconds?: number): boolean;
-    static createHandler(secret: string, handlers: Partial<Record<string, (event: WebhookEvent) => void | Promise<void>>>): (payload: string | Buffer, signature: string) => Promise<void>;
+    static createHandler(secret: string, handlers: {
+        [K in WebhookEventType]?: (event: K extends 'system.health_check' ? HealthCheckWebhookEvent : PaymentWebhookEvent) => void | Promise<void>;
+    }): (payload: string | Buffer, signature: string) => Promise<void>;
 }
 
 declare class TransVoucher {
@@ -303,4 +317,4 @@ declare class TransVoucher {
     private validateConfig;
 }
 
-export { ApiError, type ApiResponse, AuthenticationError, type Commodity, CommodityService, type ConversionRate, type CreatePaymentRequest, type Currency, CurrencyService, HttpClient, type Network, NetworkError, NetworkService, type PaginationMeta, type Payment, type PaymentList, type PaymentListRequest, PaymentService, type PaymentStatus, type RequestOptions, TransVoucher, type TransVoucherConfig, TransVoucherError, ValidationError, type WebhookEvent, type WebhookEventType, WebhookUtils, type WebhookVerificationResult, TransVoucher as default };
+export { ApiError, type ApiResponse, AuthenticationError, type Commodity, CommodityService, type ConversionRate, type CreatePaymentRequest, type Currency, CurrencyService, type HealthCheckWebhookEvent, HttpClient, type Network, NetworkError, NetworkService, type PaginationMeta, type Payment, type PaymentList, type PaymentListRequest, PaymentService, type PaymentStatus, type PaymentWebhookEvent, type PaymentWebhookEventType, type RequestOptions, TransVoucher, type TransVoucherConfig, TransVoucherError, ValidationError, type WebhookEvent, type WebhookEventType, WebhookUtils, type WebhookVerificationResult, TransVoucher as default };

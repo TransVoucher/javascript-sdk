@@ -673,7 +673,8 @@ var WebhookUtils = class {
       "payment_intent.succeeded",
       "payment_intent.failed",
       "payment_intent.cancelled",
-      "payment_intent.expired"
+      "payment_intent.expired",
+      "system.health_check"
     ];
     if (!validEventTypes.includes(eventData.event)) {
       return {
@@ -699,6 +700,22 @@ var WebhookUtils = class {
         error: "Event must have valid data"
       };
     }
+    if (eventData.event === "system.health_check") {
+      const data = eventData.data;
+      if (!data.message || typeof data.message !== "string") {
+        return {
+          isValid: false,
+          error: "Health check must have a message"
+        };
+      }
+      if (!data.sales_channel_id || typeof data.sales_channel_id !== "number") {
+        return {
+          isValid: false,
+          error: "Health check must have a sales_channel_id"
+        };
+      }
+      return { isValid: true };
+    }
     const transaction = eventData.data.transaction;
     if (!transaction || typeof transaction !== "object") {
       return {
@@ -712,7 +729,7 @@ var WebhookUtils = class {
         error: "Transaction must have a valid ID"
       };
     }
-    if (typeof transaction.commodity_amount !== "number" || transaction.commodity_amount <= 0) {
+    if (typeof transaction.commodity_amount !== "number" || transaction.commodity_amount < 0) {
       return {
         isValid: false,
         error: "Transaction must have a valid commodity_amount"
@@ -772,7 +789,8 @@ var WebhookUtils = class {
       if (!result.isValid || !result.event) {
         throw new TransVoucherError(result.error || "Invalid webhook event");
       }
-      const handler = handlers[result.event.event];
+      const eventType = result.event.event;
+      const handler = handlers[eventType];
       if (handler) {
         await handler(result.event);
       }
